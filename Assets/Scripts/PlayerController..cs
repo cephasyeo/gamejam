@@ -15,11 +15,17 @@ namespace TarodevController
     public class PlayerController : MonoBehaviour, IPlayerController
     {
         [SerializeField] private ScriptableStats _stats;
+        [SerializeField] private Sprite[] characterSprites = new Sprite[4]; // Array of 4 character sprites
+        [SerializeField] private SpriteRenderer spriteRenderer;
+        
         private Rigidbody2D _rb;
         private Collider2D _col;
         private FrameInput _frameInput;
         private Vector2 _frameVelocity;
         private bool _cachedQueryStartInColliders;
+        
+        // Character switching
+        private int currentCharacterIndex = 0;
 
         #region Interface
 
@@ -38,6 +44,10 @@ namespace TarodevController
             
             // Freeze rotation to prevent rolling
             _rb.freezeRotation = true;
+            
+            // Get SpriteRenderer if not assigned
+            if (spriteRenderer == null)
+                spriteRenderer = GetComponent<SpriteRenderer>();
 
             _cachedQueryStartInColliders = Physics2D.queriesStartInColliders;
         }
@@ -46,6 +56,7 @@ namespace TarodevController
         {
             _time += Time.deltaTime;
             GatherInput();
+            HandleCharacterSwitch();
         }
 
         private void GatherInput()
@@ -227,6 +238,52 @@ namespace TarodevController
         #endregion
 
         private void ApplyMovement() => _rb.linearVelocity = _frameVelocity;
+        
+        #region Character Switching
+        
+        private void HandleCharacterSwitch()
+        {
+            var keyboard = Keyboard.current;
+            if (keyboard == null) return;
+            
+            // Check for Shift key press
+            if (keyboard.leftShiftKey.wasPressedThisFrame || keyboard.rightShiftKey.wasPressedThisFrame)
+            {
+                SwitchToNextCharacter();
+            }
+        }
+        
+        private void SwitchToNextCharacter()
+        {
+            // Cycle through characters
+            currentCharacterIndex = (currentCharacterIndex + 1) % characterSprites.Length;
+            
+            // Change sprite if available
+            if (characterSprites[currentCharacterIndex] != null && spriteRenderer != null)
+            {
+                spriteRenderer.sprite = characterSprites[currentCharacterIndex];
+                Debug.Log($"Switched to character {currentCharacterIndex + 1}");
+            }
+        }
+        
+        public void SetCharacter(int characterIndex)
+        {
+            if (characterIndex >= 0 && characterIndex < characterSprites.Length)
+            {
+                currentCharacterIndex = characterIndex;
+                if (characterSprites[currentCharacterIndex] != null && spriteRenderer != null)
+                {
+                    spriteRenderer.sprite = characterSprites[currentCharacterIndex];
+                }
+            }
+        }
+        
+        public int GetCurrentCharacterIndex()
+        {
+            return currentCharacterIndex;
+        }
+        
+        #endregion
 
 #if UNITY_EDITOR
         private void OnValidate()
