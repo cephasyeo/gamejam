@@ -198,6 +198,12 @@ namespace TarodevController
             
             _frameVelocity.y = jumpPower;
             Jumped?.Invoke();
+            
+            // Play jump SFX
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlayJumpSFX();
+            }
         }
 
         #endregion

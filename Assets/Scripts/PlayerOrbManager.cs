@@ -176,6 +176,12 @@ public class PlayerOrbManager : MonoBehaviour
         // Update UI after consuming dash
         TriggerUIUpdate();
         
+        // Play dash SFX
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayDashSFX();
+        }
+        
         
         if (debugMode)
         {
@@ -343,6 +349,12 @@ public class PlayerOrbManager : MonoBehaviour
         
         // Update UI after collecting orb
         TriggerUIUpdate();
+        
+        // Play orb collect SFX
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayOrbCollectSFX();
+        }
     }
     
     public int GetCurrentStackCount()

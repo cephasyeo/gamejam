@@ -30,24 +30,46 @@ public class OptionsMenu : MonoBehaviour
         }
     }
     
-    private void InitializeUI()
+    private void RefreshSliderValues()
     {
-        // Initialize sliders with current volume values
+        // Update sliders with current volume values without triggering events
         if (AudioManager.Instance != null)
         {
             if (masterVolumeSlider != null)
             {
-                masterVolumeSlider.value = AudioManager.Instance.MasterVolume;
+                masterVolumeSlider.SetValueWithoutNotify(AudioManager.Instance.MasterVolume);
             }
             
             if (musicVolumeSlider != null)
             {
-                musicVolumeSlider.value = AudioManager.Instance.MusicVolume;
+                musicVolumeSlider.SetValueWithoutNotify(AudioManager.Instance.MusicVolume);
             }
             
             if (sfxVolumeSlider != null)
             {
-                sfxVolumeSlider.value = AudioManager.Instance.SFXVolume;
+                sfxVolumeSlider.SetValueWithoutNotify(AudioManager.Instance.SFXVolume);
+            }
+        }
+    }
+    
+    private void InitializeUI()
+    {
+        // Initialize sliders with current volume values without triggering events
+        if (AudioManager.Instance != null)
+        {
+            if (masterVolumeSlider != null)
+            {
+                masterVolumeSlider.SetValueWithoutNotify(AudioManager.Instance.MasterVolume);
+            }
+            
+            if (musicVolumeSlider != null)
+            {
+                musicVolumeSlider.SetValueWithoutNotify(AudioManager.Instance.MusicVolume);
+            }
+            
+            if (sfxVolumeSlider != null)
+            {
+                sfxVolumeSlider.SetValueWithoutNotify(AudioManager.Instance.SFXVolume);
             }
         }
     }
@@ -161,20 +183,20 @@ public class OptionsMenu : MonoBehaviour
         {
             AudioManager.Instance.ResetToDefaults();
             
-            // Update sliders to reflect reset values
+            // Update sliders to reflect reset values without triggering events
             if (masterVolumeSlider != null)
             {
-                masterVolumeSlider.value = AudioManager.Instance.MasterVolume;
+                masterVolumeSlider.SetValueWithoutNotify(AudioManager.Instance.MasterVolume);
             }
             
             if (musicVolumeSlider != null)
             {
-                musicVolumeSlider.value = AudioManager.Instance.MusicVolume;
+                musicVolumeSlider.SetValueWithoutNotify(AudioManager.Instance.MusicVolume);
             }
             
             if (sfxVolumeSlider != null)
             {
-                sfxVolumeSlider.value = AudioManager.Instance.SFXVolume;
+                sfxVolumeSlider.SetValueWithoutNotify(AudioManager.Instance.SFXVolume);
             }
         }
         
@@ -235,8 +257,8 @@ public class OptionsMenu : MonoBehaviour
     {
         gameObject.SetActive(true);
         
-        // Refresh UI with current values
-        InitializeUI();
+        // Refresh UI with current values (but don't restart music)
+        RefreshSliderValues();
         
         if (debugMode)
         {

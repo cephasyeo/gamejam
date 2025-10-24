@@ -10,6 +10,11 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioSource musicSource;
     [SerializeField] private AudioSource sfxSource;
     
+    [Header("Game SFX")]
+    [SerializeField] private AudioClip jumpSFX;
+    [SerializeField] private AudioClip orbCollectSFX;
+    [SerializeField] private AudioClip dashSFX;
+    
     [Header("Default Volume Levels")]
     [SerializeField] private float defaultMasterVolume = 1f;
     [SerializeField] private float defaultMusicVolume = 0.8f;
@@ -146,6 +151,16 @@ public class AudioManager : MonoBehaviour
     {
         if (musicSource != null && clip != null)
         {
+            // Don't restart if the same music is already playing
+            if (musicSource.isPlaying && musicSource.clip == clip)
+            {
+                if (debugMode)
+                {
+                    Debug.Log($"Music already playing: {clip.name}");
+                }
+                return;
+            }
+            
             musicSource.clip = clip;
             musicSource.loop = loop;
             musicSource.Play();
@@ -219,6 +234,31 @@ public class AudioManager : MonoBehaviour
             {
                 Debug.Log($"Playing SFX at position: {clip.name}");
             }
+        }
+    }
+    
+    // Game-specific SFX methods
+    public void PlayJumpSFX()
+    {
+        if (jumpSFX != null)
+        {
+            PlaySFX(jumpSFX);
+        }
+    }
+    
+    public void PlayOrbCollectSFX()
+    {
+        if (orbCollectSFX != null)
+        {
+            PlaySFX(orbCollectSFX);
+        }
+    }
+    
+    public void PlayDashSFX()
+    {
+        if (dashSFX != null)
+        {
+            PlaySFX(dashSFX);
         }
     }
     
