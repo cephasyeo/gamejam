@@ -18,8 +18,9 @@ MonoBehaviour:
   basePower: 1
   powerIncreasePerStack: 1
   maxStacks: 5
-  jumpPowerMultiplier: 1.2
+  jumpPowerMultiplier: 1.0
   dashDistance: 5
   dashSpeed: 20
   dashCooldown: 0.5
+
 

@@ -7,6 +7,12 @@ public class PlayerOrbManager : MonoBehaviour
     [Header("Player References")]
     [SerializeField] private PlayerController playerController;
     [SerializeField] private SpriteRenderer playerSpriteRenderer;
+    [SerializeField] private ScriptableStats playerStats;
+    [SerializeField] private PlayerInputHandler inputHandler;
+    
+    [Header("Character Sprites")]
+    [SerializeField] private Sprite redSprite;    // Default red character
+    [SerializeField] private Sprite greenSprite; // Green character for dash ability
     
     [Header("Current Orb State")]
     [SerializeField] private OrbStats currentOrbStats;
@@ -16,6 +22,9 @@ public class PlayerOrbManager : MonoBehaviour
     [Header("Jump Counter")]
     [SerializeField] private int remainingAirJumps = 0;
     
+    [Header("Dash Counter")]
+    [SerializeField] private int remainingDashes = 0;
+    
     [Header("Dash Settings")]
     [SerializeField] private float dashCooldownTimer = 0f;
     [SerializeField] private bool isDashing = false;
@@ -23,10 +32,9 @@ public class PlayerOrbManager : MonoBehaviour
     [SerializeField] private float dashTimer = 0f;
     
     [Header("Debug")]
-    [SerializeField] private bool debugMode = true;
+    [SerializeField] public bool debugMode = true;
     
     private Rigidbody2D playerRigidbody;
-    private Vector2 originalVelocity;
     
     private void Awake()
     {
@@ -38,75 +46,135 @@ public class PlayerOrbManager : MonoBehaviour
             
         playerRigidbody = GetComponent<Rigidbody2D>();
         
-        // Don't change the initial sprite color - let the original sprite stay as is
+        // Store the initial red sprite if not assigned
+        if (redSprite == null && playerSpriteRenderer != null)
+        {
+            redSprite = playerSpriteRenderer.sprite;
+        }
     }
     
     private void Update()
     {
-        // Only handle dash if we have dash ability
-        if (currentAbility == OrbAbility.Dash)
-        {
-            HandleDashInput();
-            UpdateDashCooldown();
-            UpdateDashMovement();
-        }
+        // Always handle dash input and movement, regardless of current ability
+        HandleDashInput();
+        UpdateDashCooldown();
+        UpdateDashMovement();
     }
     
     private void HandleDashInput()
     {
-        if (currentAbility != OrbAbility.Dash) return;
-        if (isDashing) return;
-        if (dashCooldownTimer > 0) return;
-        
-        var keyboard = Keyboard.current;
-        var gamepad = Gamepad.current;
-        
-        bool dashInput = false;
-        Vector2 inputDirection = Vector2.zero;
-        
-        // Check keyboard input
-        if (keyboard != null)
+        if (inputHandler == null) 
         {
-            dashInput = keyboard.leftShiftKey.wasPressedThisFrame || keyboard.rightShiftKey.wasPressedThisFrame;
-            
-            if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed) inputDirection.x -= 1f;
-            if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed) inputDirection.x += 1f;
-            if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed) inputDirection.y += 1f;
-            if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed) inputDirection.y -= 1f;
-        }
-        
-        // Check gamepad input
-        if (gamepad != null)
-        {
-            dashInput = dashInput || gamepad.buttonWest.wasPressedThisFrame; // Left bumper
-            Vector2 gamepadInput = gamepad.leftStick.ReadValue();
-            if (gamepadInput.magnitude > inputDirection.magnitude)
+            if (debugMode)
             {
-                inputDirection = gamepadInput;
+                Debug.Log("InputHandler is null!");
             }
+            return;
         }
         
-        if (dashInput && inputDirection.magnitude > 0.1f)
+        bool dashInput = inputHandler.GetDashPressed();
+        if (debugMode && dashInput)
         {
-            StartDash(inputDirection.normalized);
+            Debug.Log($"Dash input detected! Current ability: {currentAbility}, Remaining dashes: {remainingDashes}, Is dashing: {isDashing}");
+        }
+        
+        if (currentAbility != OrbAbility.Dash) 
+        {
+            if (debugMode && dashInput)
+            {
+                Debug.Log($"Dash input detected but current ability is: {currentAbility}, need Dash ability");
+            }
+            return;
+        }
+        if (isDashing) return;
+        if (remainingDashes <= 0) 
+        {
+            if (debugMode && dashInput)
+            {
+                Debug.Log($"Dash input detected but no remaining dashes: {remainingDashes}");
+            }
+            return;
+        }
+        
+        Vector2 inputDirection = inputHandler.GetMoveInput();
+        
+        if (dashInput)
+        {
+            Vector2 dashDirection = Vector2.zero;
+            
+            if (inputDirection.magnitude > 0.1f)
+            {
+                // Use current input direction
+                dashDirection = inputDirection.normalized;
+                if (debugMode)
+                {
+                    Debug.Log($"Dash input detected! Using input direction: {dashDirection}");
+                }
+            }
+            else
+            {
+                // No input direction, use character facing direction from sprite
+                if (playerSpriteRenderer != null)
+                {
+                    // Check if sprite is flipped (facing left)
+                    bool facingLeft = playerSpriteRenderer.flipX;
+                    dashDirection = facingLeft ? Vector2.left : Vector2.right;
+                }
+                else
+                {
+                    // Fallback: check transform scale
+                    if (transform.localScale.x < 0)
+                    {
+                        dashDirection = Vector2.left;
+                    }
+                    else
+                    {
+                        dashDirection = Vector2.right;
+                    }
+                }
+                
+                if (debugMode)
+                {
+                    Debug.Log($"Dash input detected! Using character facing direction: {dashDirection}");
+                }
+            }
+            
+            StartDash(dashDirection);
         }
     }
     
     private void StartDash(Vector2 direction)
     {
-        if (currentOrbStats == null || playerRigidbody == null) return;
+        if (playerStats == null) 
+        {
+            Debug.LogError("PlayerStats is null! Cannot start dash.");
+            return;
+        }
+        if (playerRigidbody == null) 
+        {
+            Debug.LogError("PlayerRigidbody is null! Cannot start dash.");
+            return;
+        }
         
         isDashing = true;
         dashDirection = direction;
-        dashTimer = currentOrbStats.dashDistance / currentOrbStats.dashSpeed;
-        dashCooldownTimer = currentOrbStats.dashCooldown;
-        
-        // Store original velocity
-        originalVelocity = playerRigidbody.linearVelocity;
+        dashTimer = playerStats.DashDistance / playerStats.DashSpeed;
+        dashCooldownTimer = playerStats.DashCooldown;
         
         if (debugMode)
         {
-            Debug.Log($"Started dash in direction: {direction} for {dashTimer} seconds");
+            Debug.Log($"Dash timer calculation: {playerStats.DashDistance} / {playerStats.DashSpeed} = {dashTimer}");
+        }
+        
+        // Consume one dash
+        remainingDashes--;
+        
+        
+        if (debugMode)
+        {
+            Debug.Log($"Started dash in direction: {direction} for {dashTimer} seconds, remaining dashes: {remainingDashes}");
+            Debug.Log($"Dash parameters - Distance: {playerStats.DashDistance}, Speed: {playerStats.DashSpeed}");
+            Debug.Log($"Player position before dash: {transform.position}");
         }
     }
     
@@ -123,7 +191,7 @@ public class PlayerOrbManager : MonoBehaviour
         if (!isDashing) return;
         if (playerRigidbody == null) return;
         
-        dashTimer -= Time.deltaTime;
+        dashTimer -= Time.fixedDeltaTime;
         
         if (dashTimer <= 0)
         {
@@ -131,10 +199,17 @@ public class PlayerOrbManager : MonoBehaviour
         }
         else
         {
-            // Apply dash movement - only override horizontal movement, preserve vertical
-            float dashSpeed = currentOrbStats.dashSpeed * currentStackCount;
+            // During dash: suspend gravity, maintain horizontal movement
+            float dashSpeed = playerStats.DashSpeed;
             Vector2 dashVelocity = dashDirection * dashSpeed;
-            playerRigidbody.linearVelocity = new Vector2(dashVelocity.x, playerRigidbody.linearVelocity.y);
+            
+            // Apply dash velocity with NO vertical movement (gravity suspended)
+            playerRigidbody.linearVelocity = dashVelocity;
+            
+            if (debugMode)
+            {
+                Debug.Log($"Dashing! Speed: {dashSpeed}, Direction: {dashDirection}, Velocity: {playerRigidbody.linearVelocity}");
+            }
         }
     }
     
@@ -143,16 +218,42 @@ public class PlayerOrbManager : MonoBehaviour
         isDashing = false;
         dashTimer = 0f;
         
-        // Only restore velocity if we have a valid rigidbody
-        if (playerRigidbody != null)
-        {
-            // Restore original velocity (but maintain dash momentum)
-            playerRigidbody.linearVelocity = dashDirection * currentOrbStats.dashSpeed * 0.5f;
-        }
-        
+        // Don't reset anything - let PlayerController handle it naturally
         if (debugMode)
         {
-            Debug.Log("Dash ended");
+            Debug.Log("Dash ended - returning control to PlayerController");
+        }
+    }
+    
+    private void ChangePlayerSprite(OrbAbility ability)
+    {
+        if (playerSpriteRenderer == null) return;
+        
+        switch (ability)
+        {
+            case OrbAbility.Jump:
+                // Red sprite for jump ability
+                if (redSprite != null)
+                {
+                    playerSpriteRenderer.sprite = redSprite;
+                    if (debugMode)
+                    {
+                        Debug.Log("Changed to red sprite (Jump ability)");
+                    }
+                }
+                break;
+                
+            case OrbAbility.Dash:
+                // Green sprite for dash ability
+                if (greenSprite != null)
+                {
+                    playerSpriteRenderer.sprite = greenSprite;
+                    if (debugMode)
+                    {
+                        Debug.Log("Changed to green sprite (Dash ability)");
+                    }
+                }
+                break;
         }
     }
     
@@ -168,7 +269,8 @@ public class PlayerOrbManager : MonoBehaviour
             currentOrbStats = orbStats;
             currentAbility = orbStats.ability;
             
-            // Don't change color since player is already red
+            // Change sprite to match the new ability
+            ChangePlayerSprite(orbStats.ability);
             
             if (debugMode)
             {
@@ -183,7 +285,8 @@ public class PlayerOrbManager : MonoBehaviour
                 currentOrbStats = orbStats;
                 currentAbility = orbStats.ability;
                 
-                // Don't change color since player is already red
+                // Change sprite to match the ability
+                ChangePlayerSprite(orbStats.ability);
             }
             
             currentStackCount = Mathf.Min(currentStackCount + 1, orbStats.maxStacks);
@@ -197,13 +300,23 @@ public class PlayerOrbManager : MonoBehaviour
         // Update air jump counter for red orbs
         if (orbStats.ability == OrbAbility.Jump)
         {
-            remainingAirJumps = currentStackCount;
+            // Each red orb gives 1 air jump, add to existing count
+            remainingAirJumps += 1;
+            if (debugMode)
+            {
+                Debug.Log($"Red orb collected! Stacks: {currentStackCount}, Air jumps: {remainingAirJumps}");
+            }
         }
         
-        // Reset dash cooldown when collecting dash orbs
+        // Update dash counter for green orbs
         if (orbStats.ability == OrbAbility.Dash)
         {
-            dashCooldownTimer = 0f;
+            // Each green orb gives 1 dash, add to existing count
+            remainingDashes += 1;
+            if (debugMode)
+            {
+                Debug.Log($"Green orb collected! Stacks: {currentStackCount}, Dashes: {remainingDashes}, Ability: {currentAbility}");
+            }
         }
     }
     
@@ -234,11 +347,6 @@ public class PlayerOrbManager : MonoBehaviour
         return Mathf.Pow(currentOrbStats.jumpPowerMultiplier, currentStackCount);
     }
     
-    public bool CanDash()
-    {
-        return currentAbility == OrbAbility.Dash && currentOrbStats != null && currentStackCount > 0 && dashCooldownTimer <= 0 && !isDashing;
-    }
-    
     public bool CanAirJump()
     {
         return remainingAirJumps > 0;
@@ -251,7 +359,14 @@ public class PlayerOrbManager : MonoBehaviour
             remainingAirJumps--;
             if (debugMode)
             {
-                Debug.Log($"Used air jump, remaining: {remainingAirJumps}");
+                Debug.Log($"Used air jump! Remaining: {remainingAirJumps}");
+            }
+        }
+        else
+        {
+            if (debugMode)
+            {
+                Debug.Log("Tried to use air jump but none remaining!");
             }
         }
     }
@@ -269,4 +384,24 @@ public class PlayerOrbManager : MonoBehaviour
     {
         return remainingAirJumps;
     }
+    
+    public void ResetDashCount()
+    {
+        remainingDashes = 0;
+        if (debugMode)
+        {
+            Debug.Log("Dash count reset to 0");
+        }
+    }
+    
+    public bool IsDashing()
+    {
+        return isDashing;
+    }
+    
+    public int GetRemainingDashes()
+    {
+        return remainingDashes;
+    }
+    
 }

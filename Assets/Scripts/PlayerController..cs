@@ -15,8 +15,8 @@ namespace TarodevController
     public class PlayerController : MonoBehaviour, IPlayerController
     {
         [SerializeField] private ScriptableStats _stats;
-        [SerializeField] private SpriteRenderer spriteRenderer;
         [SerializeField] private PlayerOrbManager orbManager;
+        [SerializeField] private PlayerInputHandler inputHandler;
         
         private Rigidbody2D _rb;
         private Collider2D _col;
@@ -42,9 +42,6 @@ namespace TarodevController
             // Freeze rotation to prevent rolling
             _rb.freezeRotation = true;
             
-            // Get SpriteRenderer if not assigned
-            if (spriteRenderer == null)
-                spriteRenderer = GetComponent<SpriteRenderer>();
             
             // Get PlayerOrbManager if not assigned
             if (orbManager == null)
@@ -61,48 +58,13 @@ namespace TarodevController
 
         private void GatherInput()
         {
-            var keyboard = Keyboard.current;
-            var gamepad = Gamepad.current;
-            
-            bool jumpDown = false;
-            bool jumpHeld = false;
-            Vector2 moveInput = Vector2.zero;
-            
-            // Keyboard input
-            if (keyboard != null)
-            {
-                jumpDown = keyboard.spaceKey.wasPressedThisFrame || keyboard.cKey.wasPressedThisFrame;
-                jumpHeld = keyboard.spaceKey.isPressed || keyboard.cKey.isPressed;
-                
-                float horizontal = 0f;
-                if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed) horizontal -= 1f;
-                if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed) horizontal += 1f;
-                
-                float vertical = 0f;
-                if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed) vertical -= 1f;
-                if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed) vertical += 1f;
-                
-                moveInput = new Vector2(horizontal, vertical);
-            }
-            
-            // Gamepad input (if available)
-            if (gamepad != null)
-            {
-                jumpDown = jumpDown || gamepad.buttonSouth.wasPressedThisFrame;
-                jumpHeld = jumpHeld || gamepad.buttonSouth.isPressed;
-                
-                Vector2 gamepadMove = gamepad.leftStick.ReadValue();
-                if (gamepadMove.magnitude > moveInput.magnitude)
-                {
-                    moveInput = gamepadMove;
-                }
-            }
+            if (inputHandler == null) return;
             
             _frameInput = new FrameInput
             {
-                JumpDown = jumpDown,
-                JumpHeld = jumpHeld,
-                Move = moveInput
+                JumpDown = inputHandler.GetJumpPressed(),
+                JumpHeld = inputHandler.GetJumpHeld(),
+                Move = inputHandler.GetMoveInput()
             };
 
             if (_stats.SnapInput)
@@ -153,10 +115,11 @@ namespace TarodevController
                 _bufferedJumpUsable = true;
                 _endedJumpEarly = false;
                 
-                // Reset air jumps when landing
+                // Reset air jumps and dashes when landing
                 if (orbManager != null)
                 {
                     orbManager.ResetAirJumps();
+                    orbManager.ResetDashCount();
                 }
                 
                 GroundedChanged?.Invoke(true, Mathf.Abs(_frameVelocity.y));
@@ -195,13 +158,20 @@ namespace TarodevController
             // Allow jumping if grounded, can use coyote, OR if player has air jumps remaining
             bool canJump = _grounded || CanUseCoyote;
             
-            // Check if player has air jumps remaining
+            // Check if player has air jumps remaining (only if not grounded and not coyote)
             if (!canJump && orbManager != null && orbManager.CanAirJump())
             {
                 canJump = true;
             }
 
-            if (canJump) ExecuteJump();
+            if (canJump) 
+            {
+                if (orbManager != null && orbManager.debugMode)
+                {
+                    Debug.Log($"Jumping! Grounded: {_grounded}, Coyote: {CanUseCoyote}, Air jumps: {orbManager.GetRemainingAirJumps()}");
+                }
+                ExecuteJump();
+            }
 
             _jumpToConsume = false;
         }
@@ -236,6 +206,13 @@ namespace TarodevController
 
         private void HandleDirection()
         {
+            // Don't handle horizontal movement during dash
+            if (orbManager != null && orbManager.IsDashing())
+            {
+                return; // Let PlayerOrbManager handle horizontal movement during dash
+            }
+            
+            
             if (_frameInput.Move.x == 0)
             {
                 var deceleration = _grounded ? _stats.GroundDeceleration : _stats.AirDeceleration;
@@ -253,6 +230,12 @@ namespace TarodevController
 
         private void HandleGravity()
         {
+            // Don't apply gravity during dash
+            if (orbManager != null && orbManager.IsDashing())
+            {
+                return; // Let PlayerOrbManager handle movement during dash
+            }
+            
             if (_grounded && _frameVelocity.y <= 0f)
             {
                 _frameVelocity.y = _stats.GroundingForce;
@@ -267,7 +250,18 @@ namespace TarodevController
 
         #endregion
 
-        private void ApplyMovement() => _rb.linearVelocity = _frameVelocity;
+        
+        private void ApplyMovement() 
+        {
+            // Don't override velocity if player is dashing
+            if (orbManager != null && orbManager.IsDashing())
+            {
+                return; // Let PlayerOrbManager handle velocity during dash
+            }
+            
+            
+            _rb.linearVelocity = _frameVelocity;
+        }
 
 #if UNITY_EDITOR
         private void OnValidate()
