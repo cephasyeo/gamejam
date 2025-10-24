@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using TarodevController;
+using System;
 
 public class PlayerOrbManager : MonoBehaviour
 {
@@ -33,6 +34,9 @@ public class PlayerOrbManager : MonoBehaviour
     
     [Header("Debug")]
     [SerializeField] public bool debugMode = true;
+    
+    // Events for UI updates
+    public event Action<int, int> OnOrbStacksChanged; // redStacks, greenStacks
     
     private Rigidbody2D playerRigidbody;
     
@@ -169,6 +173,9 @@ public class PlayerOrbManager : MonoBehaviour
         // Consume one dash
         remainingDashes--;
         
+        // Update UI after consuming dash
+        TriggerUIUpdate();
+        
         
         if (debugMode)
         {
@@ -257,6 +264,21 @@ public class PlayerOrbManager : MonoBehaviour
         }
     }
     
+    private void TriggerUIUpdate()
+    {
+        // Calculate current stacks based on remaining abilities
+        int redStacks = (currentAbility == OrbAbility.Jump) ? remainingAirJumps : 0;
+        int greenStacks = (currentAbility == OrbAbility.Dash) ? remainingDashes : 0;
+        
+        // Trigger UI update event
+        OnOrbStacksChanged?.Invoke(redStacks, greenStacks);
+        
+        if (debugMode)
+        {
+            Debug.Log($"UI Update: Red stacks: {redStacks}, Green stacks: {greenStacks}");
+        }
+    }
+    
     public void CollectOrb(OrbStats orbStats)
     {
         if (orbStats == null) return;
@@ -318,6 +340,9 @@ public class PlayerOrbManager : MonoBehaviour
                 Debug.Log($"Green orb collected! Stacks: {currentStackCount}, Dashes: {remainingDashes}, Ability: {currentAbility}");
             }
         }
+        
+        // Update UI after collecting orb
+        TriggerUIUpdate();
     }
     
     public int GetCurrentStackCount()
@@ -361,6 +386,9 @@ public class PlayerOrbManager : MonoBehaviour
             {
                 Debug.Log($"Used air jump! Remaining: {remainingAirJumps}");
             }
+            
+            // Update UI after consuming air jump
+            TriggerUIUpdate();
         }
         else
         {
@@ -378,6 +406,9 @@ public class PlayerOrbManager : MonoBehaviour
         {
             Debug.Log("Air jumps reset (landed on ground)");
         }
+        
+        // Update UI after resetting air jumps
+        TriggerUIUpdate();
     }
     
     public int GetRemainingAirJumps()
@@ -392,6 +423,9 @@ public class PlayerOrbManager : MonoBehaviour
         {
             Debug.Log("Dash count reset to 0");
         }
+        
+        // Update UI after resetting dash count
+        TriggerUIUpdate();
     }
     
     public bool IsDashing()
