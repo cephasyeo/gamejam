@@ -177,3 +177,5 @@ MonoBehaviour:
   bobSpeed: 2
   bobHeight: 0.5
   rotationSpeed: 90
+  respawnDelay: 3
+  respawnEnabled: 1

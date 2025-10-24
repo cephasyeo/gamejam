@@ -218,6 +218,12 @@ namespace TarodevController
                 return; // Let PlayerOrbManager handle horizontal movement during dash
             }
             
+            // If there's a significant difference between frame velocity and rigidbody velocity, sync them
+            float velocityDifference = Mathf.Abs(_frameVelocity.x - _rb.linearVelocity.x);
+            if (velocityDifference > 0.1f) // Only sync if there's a meaningful difference
+            {
+                _frameVelocity.x = _rb.linearVelocity.x;
+            }
             
             if (_frameInput.Move.x == 0)
             {
@@ -265,7 +271,7 @@ namespace TarodevController
                 return; // Let PlayerOrbManager handle velocity during dash
             }
             
-            
+            // Always apply the frame velocity to ensure consistency
             _rb.linearVelocity = _frameVelocity;
         }
 

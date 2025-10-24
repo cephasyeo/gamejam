@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 using TarodevController;
 
 public class Orb : MonoBehaviour
@@ -16,8 +17,13 @@ public class Orb : MonoBehaviour
     [SerializeField] private float bobHeight = 0.5f;
     [SerializeField] private float rotationSpeed = 90f;
     
+    [Header("Respawn Settings")]
+    [SerializeField] private float respawnDelay = 3f;
+    [SerializeField] private bool respawnEnabled = true;
+    
     private Vector3 startPosition;
     private bool isCollected = false;
+    private bool isRespawning = false;
     
     private void Awake()
     {
@@ -37,7 +43,7 @@ public class Orb : MonoBehaviour
     
     private void Update()
     {
-        if (!isCollected)
+        if (!isCollected && !isRespawning)
         {
             // Bobbing animation
             float newY = startPosition.y + Mathf.Sin(Time.time * bobSpeed) * bobHeight;
@@ -70,7 +76,7 @@ public class Orb : MonoBehaviour
     
     private void CollectOrb(PlayerController player)
     {
-        if (isCollected) return;
+        if (isCollected || isRespawning) return;
         
         isCollected = true;
         
@@ -84,8 +90,16 @@ public class Orb : MonoBehaviour
         // Play collection effects
         PlayCollectionEffects();
         
-        // Destroy the orb
-        Destroy(gameObject, 0.5f); // Small delay to let effects play
+        // Start respawn process if enabled
+        if (respawnEnabled)
+        {
+            StartCoroutine(RespawnOrb());
+        }
+        else
+        {
+            // Destroy the orb if respawn is disabled
+            Destroy(gameObject, 0.5f);
+        }
     }
     
     private void PlayCollectionEffects()
@@ -124,6 +138,32 @@ public class Orb : MonoBehaviour
     public OrbStats GetOrbStats()
     {
         return orbStats;
+    }
+    
+    private System.Collections.IEnumerator RespawnOrb()
+    {
+        // Wait for respawn delay
+        yield return new WaitForSeconds(respawnDelay);
+        
+        // Reset orb state
+        isCollected = false;
+        isRespawning = false;
+        
+        // Reset position to original spawn position
+        transform.position = startPosition;
+        
+        // Re-enable visual components
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.enabled = true;
+        }
+        
+        if (orbCollider != null)
+        {
+            orbCollider.enabled = true;
+        }
+        
+        Debug.Log($"Orb respawned at position: {startPosition}");
     }
     
     private void OnValidate()

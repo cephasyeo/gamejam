@@ -231,10 +231,27 @@ public class PlayerOrbManager : MonoBehaviour
         isDashing = false;
         dashTimer = 0f;
         
-        // Don't reset anything - let PlayerController handle it naturally
-        if (debugMode)
+        // Sync PlayerController's frame velocity with current rigidbody velocity
+        if (playerController != null && playerRigidbody != null)
         {
-            Debug.Log("Dash ended - returning control to PlayerController");
+            // Get the current rigidbody velocity
+            Vector2 currentVelocity = playerRigidbody.linearVelocity;
+            
+            // Preserve some horizontal momentum but let gravity take over
+            Vector2 newVelocity = new Vector2(currentVelocity.x * 0.7f, 0f);
+            playerRigidbody.linearVelocity = newVelocity;
+            
+            if (debugMode)
+            {
+                Debug.Log($"Dash ended - synced velocity: {newVelocity}");
+            }
+        }
+        else
+        {
+            if (debugMode)
+            {
+                Debug.Log("Dash ended - returning control to PlayerController");
+            }
         }
     }
     
