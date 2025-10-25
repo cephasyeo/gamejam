@@ -664,6 +664,27 @@ public class PlayerOrbManager : MonoBehaviour
         return true;
     }
     
+    /// <summary>
+    /// Sets the yellow orb fire rate.
+    /// </summary>
+    public void SetYellowOrbFireRate(float newFireRate)
+    {
+        yellowOrbFireRate = newFireRate;
+        
+        if (debugMode)
+        {
+            Debug.Log($"Yellow orb fire rate set to: {newFireRate}");
+        }
+    }
+    
+    /// <summary>
+    /// Gets the current yellow orb fire rate.
+    /// </summary>
+    public float GetYellowOrbFireRate()
+    {
+        return yellowOrbFireRate;
+    }
+    
     public bool IsDashing()
     {
         return isDashing;

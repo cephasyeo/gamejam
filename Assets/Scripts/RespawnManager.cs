@@ -107,7 +107,7 @@ public class RespawnManager : MonoBehaviour
             respawnPosition = currentRespawnPoint.GetRespawnPosition() + (Vector3)respawnOffset;
             if (debugMode)
             {
-                Debug.Log($"Respawning at checkpoint: {respawnPosition}");
+                Debug.Log($"Respawning at checkpoint: {currentRespawnPoint.name} at position: {respawnPosition}");
             }
         }
         else
@@ -115,7 +115,7 @@ public class RespawnManager : MonoBehaviour
             respawnPosition = initialSpawnPosition + (Vector3)respawnOffset;
             if (debugMode)
             {
-                Debug.Log($"Respawning at initial position: {respawnPosition}");
+                Debug.Log($"Respawning at initial position: {respawnPosition} (no checkpoint set)");
             }
         }
         
@@ -146,7 +146,7 @@ public class RespawnManager : MonoBehaviour
         
         if (debugMode)
         {
-            Debug.Log("Respawn completed!");
+            Debug.Log($"Respawn completed! Player now at: {playerTransform.position}");
         }
     }
     
@@ -194,7 +194,15 @@ public class RespawnManager : MonoBehaviour
     {
         if (!isRespawning)
         {
+            if (debugMode)
+            {
+                Debug.Log($"ForceRespawn called. Current respawn point: {(currentRespawnPoint != null ? currentRespawnPoint.name : "None")}");
+            }
             StartRespawn();
+        }
+        else if (debugMode)
+        {
+            Debug.Log("ForceRespawn called but already respawning");
         }
     }
     

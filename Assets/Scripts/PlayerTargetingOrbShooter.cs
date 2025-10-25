@@ -21,6 +21,7 @@ public class PlayerTargetingOrbShooter : MonoBehaviour
 
     [Header("Orb Prefabs")]
     public GameObject whiteOrbPrefab;
+    public GameObject purpleOrbPrefab;
 
     [Header("Debug")]
     public bool debugMode = true; // Enable by default to help debug
@@ -30,7 +31,7 @@ public class PlayerTargetingOrbShooter : MonoBehaviour
     private Vector2 lastKnownPlayerPosition;
     private bool playerInRange = false;
 
-    public enum OrbType { Red, Green, White }
+    public enum OrbType { Red, Green, White, Purple }
 
     private void Start()
     {
@@ -76,13 +77,34 @@ public class PlayerTargetingOrbShooter : MonoBehaviour
     public void StartShooting()
     {
         if (isShooting) return;
-        if (orbSequence == null || orbSequence.Count == 0) return;
-        if (whiteOrbPrefab == null) return;
+        if (orbSequence == null || orbSequence.Count == 0) 
+        {
+            if (debugMode) Debug.LogWarning("PlayerTargetingOrbShooter: orbSequence is null or empty!");
+            return;
+        }
+        if (purpleOrbPrefab == null && orbSequence.Contains(OrbType.Purple)) 
+        {
+            if (debugMode) Debug.LogWarning("PlayerTargetingOrbShooter: purpleOrbPrefab is null!");
+            return;
+        }
+        if (whiteOrbPrefab == null && orbSequence.Contains(OrbType.White)) 
+        {
+            if (debugMode) Debug.LogWarning("PlayerTargetingOrbShooter: whiteOrbPrefab is null!");
+            return;
+        }
 
         isShooting = true;
         shootingCoroutine = StartCoroutine(ShootingLoop());
 
-        if (debugMode) Debug.Log("PlayerTargetingOrbShooter: started shooting white orbs.");
+        if (debugMode) Debug.Log($"PlayerTargetingOrbShooter: started shooting. Sequence: {string.Join(", ", orbSequence)}");
+    }
+    
+    /// <summary>
+    /// Public method to force update player tracking
+    /// </summary>
+    public void ForceUpdatePlayerTracking()
+    {
+        UpdatePlayerTracking();
     }
 
     public void StopShooting()
@@ -110,6 +132,20 @@ public class PlayerTargetingOrbShooter : MonoBehaviour
         }
     }
 
+    public void SetPurpleOrbPrefab(GameObject purplePrefab)
+    {
+        purpleOrbPrefab = purplePrefab;
+        
+        // Change orb sequence to only shoot purple orbs
+        orbSequence.Clear();
+        orbSequence.Add(OrbType.Purple);
+        
+        if (debugMode)
+        {
+            Debug.Log($"PlayerTargetingOrbShooter: Set purple orb prefab and updated sequence");
+        }
+    }
+    
     public void SetOrbSpeed(float newSpeed)
     {
         orbSpeed = newSpeed;
@@ -117,6 +153,8 @@ public class PlayerTargetingOrbShooter : MonoBehaviour
 
     private IEnumerator ShootingLoop()
     {
+        if (debugMode) Debug.Log($"PlayerTargetingOrbShooter: Starting shooting loop. Player in range: {playerInRange}");
+        
         while (isShooting)
         {
             if (playerInRange)
@@ -126,12 +164,12 @@ public class PlayerTargetingOrbShooter : MonoBehaviour
                 
                 if (debugMode)
                 {
-                    Debug.Log($"PlayerTargetingOrbShooter: Shot orb! Player in range: {playerInRange}");
+                    Debug.Log($"PlayerTargetingOrbShooter: Shot orb! Player in range: {playerInRange}, Distance: {Vector2.Distance(transform.position, playerTransform.position):F2}");
                 }
             }
             else if (debugMode)
             {
-                Debug.Log($"PlayerTargetingOrbShooter: Not shooting - player not in range. Distance: {Vector2.Distance(transform.position, playerTransform.position):F2}");
+                Debug.Log($"PlayerTargetingOrbShooter: Not shooting - player not in range. Distance: {Vector2.Distance(transform.position, playerTransform.position):F2}, Range: {targetingRange}");
             }
 
             yield return new WaitForSeconds(shootInterval);
@@ -173,20 +211,30 @@ public class PlayerTargetingOrbShooter : MonoBehaviour
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         orb.transform.Rotate(0f, 0f, angle);
 
-        // Assign movement fields on your existing Orb script
-        Orb orbScript = orb.GetComponent<Orb>();
-        if (orbScript != null)
+        // Check if it's a PurpleOrb
+        PurpleOrb purpleOrbScript = orb.GetComponent<PurpleOrb>();
+        if (purpleOrbScript != null)
         {
-            orbScript.SetOrbStats(orbScript.GetOrbStats()); // preserve appearance if needed
-            orbScript.isShooterOrb = true;
-            orbScript.moveDirection = direction;
-            orbScript.moveSpeed = orbSpeed;
+            // Initialize the purple orb with movement
+            purpleOrbScript.Initialize(direction, orbSpeed);
         }
         else
         {
-            if (debugMode) Debug.LogWarning("PlayerTargetingOrbShooter: spawned orb prefab has no Orb component");
-            // As a fallback, move the transform manually via a temporary component
-            orb.AddComponent<SimpleMover>().Init(direction, orbSpeed);
+            // Try Orb component for other orb types
+            Orb orbScript = orb.GetComponent<Orb>();
+            if (orbScript != null)
+            {
+                orbScript.SetOrbStats(orbScript.GetOrbStats()); // preserve appearance if needed
+                orbScript.isShooterOrb = true;
+                orbScript.moveDirection = direction;
+                orbScript.moveSpeed = orbSpeed;
+            }
+            else
+            {
+                if (debugMode) Debug.LogWarning("PlayerTargetingOrbShooter: spawned orb prefab has no Orb or PurpleOrb component");
+                // As a fallback, move the transform manually via a temporary component
+                orb.AddComponent<SimpleMover>().Init(direction, orbSpeed);
+            }
         }
 
         // Ensure sprite renders above background (optional)
@@ -197,7 +245,10 @@ public class PlayerTargetingOrbShooter : MonoBehaviour
         }
 
         if (debugMode)
-            Debug.Log($"PlayerTargetingOrbShooter: fired white reset orb toward {lastKnownPlayerPosition} (dir {direction})");
+        {
+            string orbTypeName = orb.GetComponent<PurpleOrb>() != null ? "purple" : "orb";
+            Debug.Log($"PlayerTargetingOrbShooter: fired {orbTypeName} orb toward {lastKnownPlayerPosition} (dir {direction})");
+        }
     }
 
     private GameObject GetOrbPrefab(OrbType type)
@@ -205,6 +256,7 @@ public class PlayerTargetingOrbShooter : MonoBehaviour
         switch (type)
         {
             case OrbType.White: return whiteOrbPrefab;
+            case OrbType.Purple: return purpleOrbPrefab;
             default: return null;
         }
     }

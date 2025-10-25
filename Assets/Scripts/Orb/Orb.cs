@@ -29,6 +29,26 @@ public class Orb : MonoBehaviour
     private bool isCollected = false;
     private bool isRespawning = false;
     
+    /// <summary>
+    /// Public property to check if orb is collected
+    /// </summary>
+    public bool IsCollected => isCollected;
+    
+    /// <summary>
+    /// Resets the orb to its initial state
+    /// </summary>
+    public void ResetOrb()
+    {
+        isCollected = false;
+        isRespawning = false;
+        gameObject.SetActive(true);
+        
+        if (debugMode)
+        {
+            Debug.Log($"Orb {gameObject.name} reset to initial state");
+        }
+    }
+    
     [Header("Debug")]
     [SerializeField] private bool debugMode = false;
     

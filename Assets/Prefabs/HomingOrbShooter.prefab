@@ -46,10 +46,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerTargetingOrbShooter
   shootInterval: 0.5
   orbSpeed: 10
-  startShootingOnAwake: 1
+  startShootingOnAwake: 0
   loopShooting: 1
   playerTransform: {fileID: 0}
   targetingRange: 20
   orbSequence: 02000000
   whiteOrbPrefab: {fileID: 2148215796278044752, guid: 78c9d92d38bb6d54599f741acf280723, type: 3}
+  purpleOrbPrefab: {fileID: 0}
   debugMode: 0
