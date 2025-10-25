@@ -43,10 +43,27 @@ public class CameraController : MonoBehaviour
     
     private void Start()
     {
-        // Set initial camera position
+        // Set initial camera position with boundary constraints
         if (player != null)
         {
-            transform.position = new Vector3(player.position.x, player.position.y, transform.position.z);
+            Vector3 initialPosition = new Vector3(player.position.x, player.position.y, transform.position.z);
+            
+            // Apply boundary constraints to initial position
+            if (useBoundaries)
+            {
+                float camHeight = cam.orthographicSize;
+                float camWidth = camHeight * cam.aspect;
+                
+                initialPosition.x = Mathf.Clamp(initialPosition.x, 
+                    minBounds.x + camWidth, 
+                    maxBounds.x - camWidth);
+                    
+                initialPosition.y = Mathf.Clamp(initialPosition.y, 
+                    minBounds.y + camHeight, 
+                    maxBounds.y - camHeight);
+            }
+            
+            transform.position = initialPosition;
         }
     }
     

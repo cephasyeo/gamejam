@@ -118,17 +118,14 @@ namespace TarodevController
                 _grounded = true;
                 _coyoteUsable = true;
                 _bufferedJumpUsable = true;
-                _endedJumpEarly = false;
                 
                 // Reset air jumps and dashes when landing
                 if (orbManager != null)
                 {
-                    orbManager.ResetAirJumps();
-                    orbManager.ResetDashCount();
+                    orbManager.ClearAllOrbs();
                 }
                 
-                // Reset jump early flag when landing (for consistency)
-                _endedJumpEarly = false;
+                // Jump state reset complete
                 
                 GroundedChanged?.Invoke(true, Mathf.Abs(_frameVelocity.y));
             }
@@ -150,7 +147,6 @@ namespace TarodevController
 
         private bool _jumpToConsume;
         private bool _bufferedJumpUsable;
-        private bool _endedJumpEarly;
         private bool _coyoteUsable;
         private float _timeJumpWasPressed;
 
@@ -187,7 +183,6 @@ namespace TarodevController
 
         private void ExecuteJump()
         {
-            // Removed _endedJumpEarly reset since we're not using variable jump height
             _timeJumpWasPressed = 0;
             _bufferedJumpUsable = false;
             _coyoteUsable = false;
@@ -289,7 +284,6 @@ namespace TarodevController
             // Reset jump states
             _jumpToConsume = false;
             _bufferedJumpUsable = false;
-            _endedJumpEarly = false; // Keep for consistency but not used for variable jump height
             _coyoteUsable = false;
             _timeJumpWasPressed = 0;
             

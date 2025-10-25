@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 1755375401241950605}
   - component: {fileID: 6835235331902462198}
   m_Layer: 0
-  m_Name: GreenOrb
+  m_Name: GreenOrbShot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -179,6 +179,6 @@ MonoBehaviour:
   rotationSpeed: 90
   respawnDelay: 3
   respawnEnabled: 1
-  isShooterOrb: 0
+  isShooterOrb: 1
   moveDirection: {x: 0, y: -1}
   moveSpeed: 10

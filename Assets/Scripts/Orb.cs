@@ -21,6 +21,10 @@ public class Orb : MonoBehaviour
     [SerializeField] private float respawnDelay = 3f;
     [SerializeField] private bool respawnEnabled = true;
     
+    [Header("Shooter Settings")]
+    [SerializeField] public bool isShooterOrb = false; // Set true for moving orbs
+    [SerializeField] public Vector2 moveDirection = Vector2.down;
+    [SerializeField] public float moveSpeed = 10f;
     private Vector3 startPosition;
     private bool isCollected = false;
     private bool isRespawning = false;
@@ -43,16 +47,27 @@ public class Orb : MonoBehaviour
     
     private void Update()
     {
-        if (!isCollected && !isRespawning)
+        if (isCollected || isRespawning) return;
+
+        if (isShooterOrb)
+        {
+            // Move in the set direction
+            transform.position += (Vector3)(moveDirection.normalized * moveSpeed * Time.deltaTime);
+
+            // Optional: rotate while moving
+            transform.Rotate(0, 0, rotationSpeed * Time.deltaTime);
+        }
+        else
         {
             // Bobbing animation
             float newY = startPosition.y + Mathf.Sin(Time.time * bobSpeed) * bobHeight;
             transform.position = new Vector3(transform.position.x, newY, transform.position.z);
-            
+
             // Rotation animation
             transform.Rotate(0, 0, rotationSpeed * Time.deltaTime);
         }
     }
+
     
     private void SetupOrbAppearance()
     {
@@ -61,11 +76,11 @@ public class Orb : MonoBehaviour
             spriteRenderer.color = orbStats.orbColor;
         }
     }
-    
+
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (isCollected) return;
-        
+
         // Check if player collected the orb
         PlayerController player = other.GetComponent<PlayerController>();
         if (player != null)
@@ -74,6 +89,14 @@ public class Orb : MonoBehaviour
         }
     }
     
+    private void OnBecameInvisible()
+    {
+        if (isShooterOrb)
+        {
+            Destroy(gameObject);
+        }
+    }
+
     private void CollectOrb(PlayerController player)
     {
         if (isCollected || isRespawning) return;

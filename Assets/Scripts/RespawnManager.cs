@@ -139,8 +139,7 @@ public class RespawnManager : MonoBehaviour
         PlayerOrbManager orbManager = playerTransform.GetComponent<PlayerOrbManager>();
         if (orbManager != null)
         {
-            orbManager.ResetAirJumps();
-            orbManager.ResetDashCount();
+            orbManager.ResetPlayerToDefault();
         }
         
         isRespawning = false;

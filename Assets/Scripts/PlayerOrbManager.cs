@@ -12,7 +12,8 @@ public class PlayerOrbManager : MonoBehaviour
     [SerializeField] private PlayerInputHandler inputHandler;
     
     [Header("Character Sprites")]
-    [SerializeField] private Sprite redSprite;    // Default red character
+    [SerializeField] private Sprite whiteSprite;  // Default white character
+    [SerializeField] private Sprite redSprite;    // Red character for jump ability
     [SerializeField] private Sprite greenSprite; // Green character for dash ability
     
     [Header("Current Orb State")]
@@ -39,6 +40,9 @@ public class PlayerOrbManager : MonoBehaviour
     public event Action<int, int> OnOrbStacksChanged; // redStacks, greenStacks
     
     private Rigidbody2D playerRigidbody;
+    
+    // Track if player has ever collected an orb to preserve color
+    private bool hasEverCollectedOrb = false;
     
     private void Awake()
     {
@@ -326,6 +330,21 @@ public class PlayerOrbManager : MonoBehaviour
         }
     }
     
+    private void SetDefaultSprite()
+    {
+        if (playerSpriteRenderer == null) return;
+        
+        // Set to white/default sprite when no orbs are collected
+        if (whiteSprite != null)
+        {
+            playerSpriteRenderer.sprite = whiteSprite;
+            if (debugMode)
+            {
+                Debug.Log("Changed to white sprite (default)");
+            }
+        }
+    }
+    
     private void TriggerUIUpdate()
     {
         // Calculate current stacks based on remaining abilities
@@ -344,6 +363,9 @@ public class PlayerOrbManager : MonoBehaviour
     public void CollectOrb(OrbStats orbStats)
     {
         if (orbStats == null) return;
+        
+        // Mark that player has collected an orb
+        hasEverCollectedOrb = true;
         
         // Check if this is a different color orb
         if (currentOrbStats != null && currentOrbStats.orbColor != orbStats.orbColor)
@@ -493,6 +515,58 @@ public class PlayerOrbManager : MonoBehaviour
         }
         
         // Update UI after resetting dash count
+        TriggerUIUpdate();
+    }
+    
+    public void ClearAllOrbs()
+    {
+        // Reset all orb counters
+        remainingAirJumps = 0;
+        remainingDashes = 0;
+        
+        // Reset orb stats and ability
+        currentOrbStats = null;
+        currentAbility = OrbAbility.Jump;
+        currentStackCount = 0;
+        
+        // Only change back to default white sprite if player has never collected an orb
+        if (!hasEverCollectedOrb)
+        {
+            SetDefaultSprite();
+        }
+        
+        if (debugMode)
+        {
+            Debug.Log($"All orbs cleared - player landed on ground. Has ever collected orb: {hasEverCollectedOrb}");
+        }
+        
+        // Update UI to reflect cleared orbs
+        TriggerUIUpdate();
+    }
+    
+    public void ResetPlayerToDefault()
+    {
+        // Reset all orb counters
+        remainingAirJumps = 0;
+        remainingDashes = 0;
+        
+        // Reset orb stats and ability
+        currentOrbStats = null;
+        currentAbility = OrbAbility.Jump;
+        currentStackCount = 0;
+        
+        // Reset the flag so player goes back to white sprite
+        hasEverCollectedOrb = false;
+        
+        // Change back to default white sprite
+        SetDefaultSprite();
+        
+        if (debugMode)
+        {
+            Debug.Log("Player reset to default state (respawned)");
+        }
+        
+        // Update UI to reflect cleared orbs
         TriggerUIUpdate();
     }
     
