@@ -33,6 +33,14 @@ public class PlayerOrbManager : MonoBehaviour
     [SerializeField] private Vector2 dashDirection;
     [SerializeField] private float dashTimer = 0f;
     
+    [Header("Yellow Orb Shooting")]
+    [SerializeField] private bool canShootYellowOrbs = false;
+    [SerializeField] private GameObject yellowOrbPrefab;
+    [SerializeField] private float yellowOrbFireRate = 0.5f; // Time between shots
+    [SerializeField] private float yellowOrbSpeed = 15f;
+    [SerializeField] private float yellowOrbLifetime = 5f; // How long the orb exists before destroying
+    [SerializeField] private float lastShotTime = 0f;
+    
     [Header("Debug")]
     [SerializeField] public bool debugMode = false; // Disabled for better performance
     
@@ -580,6 +588,80 @@ public class PlayerOrbManager : MonoBehaviour
         
         // Update UI to reflect cleared orbs
         TriggerUIUpdate();
+    }
+    
+    /// <summary>
+    /// Enables the yellow orb shooting ability.
+    /// </summary>
+    public void EnableYellowOrbShooting()
+    {
+        canShootYellowOrbs = true;
+        
+        if (debugMode)
+        {
+            Debug.Log("Yellow orb shooting ability enabled!");
+        }
+    }
+    
+    /// <summary>
+    /// Disables the yellow orb shooting ability.
+    /// </summary>
+    public void DisableYellowOrbShooting()
+    {
+        canShootYellowOrbs = false;
+        
+        if (debugMode)
+        {
+            Debug.Log("Yellow orb shooting ability disabled!");
+        }
+    }
+    
+    /// <summary>
+    /// Checks if the player can shoot yellow orbs.
+    /// </summary>
+    public bool CanShootYellowOrbs()
+    {
+        return canShootYellowOrbs;
+    }
+    
+    /// <summary>
+    /// Attempts to shoot a yellow orb towards the target position.
+    /// </summary>
+    public bool TryShootYellowOrb(Vector2 targetPosition)
+    {
+        if (!canShootYellowOrbs || yellowOrbPrefab == null)
+        {
+            return false;
+        }
+        
+        // Check fire rate
+        if (Time.time - lastShotTime < yellowOrbFireRate)
+        {
+            return false;
+        }
+        
+        // Calculate direction from player to target
+        Vector2 direction = (targetPosition - (Vector2)transform.position).normalized;
+        
+        // Create yellow orb
+        GameObject yellowOrb = Instantiate(yellowOrbPrefab, transform.position, Quaternion.identity);
+        
+        // Set up the yellow orb
+        YellowOrb yellowOrbScript = yellowOrb.GetComponent<YellowOrb>();
+        if (yellowOrbScript != null)
+        {
+            yellowOrbScript.Initialize(direction, yellowOrbSpeed, yellowOrbLifetime);
+        }
+        
+        // Update last shot time
+        lastShotTime = Time.time;
+        
+        if (debugMode)
+        {
+            Debug.Log($"Shot yellow orb towards {targetPosition}");
+        }
+        
+        return true;
     }
     
     public bool IsDashing()

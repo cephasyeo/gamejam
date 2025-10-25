@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8285d591bd42fd44988eccb53c85bead, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerTargetingOrbShooter
-  shootInterval: 1
+  shootInterval: 0.5
   orbSpeed: 10
   startShootingOnAwake: 1
   loopShooting: 1
