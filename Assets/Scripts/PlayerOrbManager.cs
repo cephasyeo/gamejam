@@ -33,7 +33,7 @@ public class PlayerOrbManager : MonoBehaviour
     [SerializeField] private float dashTimer = 0f;
     
     [Header("Debug")]
-    [SerializeField] public bool debugMode = true;
+    [SerializeField] public bool debugMode = false; // Disabled for better performance
     
     // Events for UI updates
     public event Action<int, int> OnOrbStacksChanged; // redStacks, greenStacks
@@ -59,9 +59,14 @@ public class PlayerOrbManager : MonoBehaviour
     
     private void Update()
     {
-        // Always handle dash input and movement, regardless of current ability
+        // Handle dash input in Update for responsive input
         HandleDashInput();
         UpdateDashCooldown();
+    }
+    
+    private void FixedUpdate()
+    {
+        // Handle dash movement in FixedUpdate for consistent physics timing
         UpdateDashMovement();
     }
     
@@ -106,18 +111,19 @@ public class PlayerOrbManager : MonoBehaviour
         {
             Vector2 dashDirection = Vector2.zero;
             
-            if (inputDirection.magnitude > 0.1f)
+            // Only allow horizontal dashes (left/right)
+            if (Mathf.Abs(inputDirection.x) > 0.1f)
             {
-                // Use current input direction
-                dashDirection = inputDirection.normalized;
+                // Use horizontal input direction only (ignore vertical)
+                dashDirection = inputDirection.x > 0 ? Vector2.right : Vector2.left;
                 if (debugMode)
                 {
-                    Debug.Log($"Dash input detected! Using input direction: {dashDirection}");
+                    Debug.Log($"Dash input detected! Using horizontal input direction: {dashDirection}");
                 }
             }
             else
             {
-                // No input direction, use character facing direction from sprite
+                // No horizontal input, use character facing direction from sprite
                 if (playerSpriteRenderer != null)
                 {
                     // Check if sprite is flipped (facing left)
@@ -195,7 +201,7 @@ public class PlayerOrbManager : MonoBehaviour
     {
         if (dashCooldownTimer > 0)
         {
-            dashCooldownTimer -= Time.deltaTime;
+            dashCooldownTimer -= Time.deltaTime; // Use deltaTime since this is in Update()
         }
     }
     
@@ -212,6 +218,17 @@ public class PlayerOrbManager : MonoBehaviour
         }
         else
         {
+            // Check for wall collision during dash
+            if (CheckWallCollision())
+            {
+                if (debugMode)
+                {
+                    Debug.Log("Dash ended early due to wall collision");
+                }
+                EndDash();
+                return;
+            }
+            
             // During dash: suspend gravity, maintain horizontal movement
             float dashSpeed = playerStats.DashSpeed;
             Vector2 dashVelocity = dashDirection * dashSpeed;
@@ -219,6 +236,32 @@ public class PlayerOrbManager : MonoBehaviour
             // Apply dash velocity with NO vertical movement (gravity suspended)
             playerRigidbody.linearVelocity = dashVelocity;
         }
+    }
+    
+    private bool CheckWallCollision()
+    {
+        if (playerController == null) return false;
+        
+        // Use the same collision detection as PlayerController but for walls
+        Collider2D col = GetComponent<Collider2D>();
+        if (col == null) return false;
+        
+        // Check for horizontal wall collision in dash direction
+        Vector2 rayDirection = dashDirection;
+        float rayDistance = 0.3f; // Increased distance to reduce false positives
+        
+        // Cast a ray in the dash direction to detect walls
+        RaycastHit2D hit = Physics2D.BoxCast(
+            col.bounds.center, 
+            col.bounds.size, 
+            0, 
+            rayDirection, 
+            rayDistance, 
+            ~playerStats.PlayerLayer
+        );
+        
+        // Only end dash if we hit a solid wall (not triggers)
+        return hit.collider != null && !hit.collider.isTrigger;
     }
     
     private void EndDash()
@@ -232,8 +275,9 @@ public class PlayerOrbManager : MonoBehaviour
             // Get the current rigidbody velocity
             Vector2 currentVelocity = playerRigidbody.linearVelocity;
             
-            // Preserve some horizontal momentum but let gravity take over
-            Vector2 newVelocity = new Vector2(currentVelocity.x * 0.7f, 0f);
+            // Preserve horizontal momentum but reduce it slightly for more natural feel
+            // Keep vertical velocity as-is to maintain natural physics
+            Vector2 newVelocity = new Vector2(currentVelocity.x * 0.8f, currentVelocity.y);
             playerRigidbody.linearVelocity = newVelocity;
             
             if (debugMode)

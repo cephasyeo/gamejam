@@ -97,6 +97,12 @@ namespace TarodevController
 
         private void CheckCollisions()
         {
+            // Skip collision handling during dash to prevent interference
+            if (orbManager != null && orbManager.IsDashing())
+            {
+                return;
+            }
+            
             Physics2D.queriesStartInColliders = false;
 
             // Ground and Ceiling
@@ -120,6 +126,9 @@ namespace TarodevController
                     orbManager.ResetAirJumps();
                     orbManager.ResetDashCount();
                 }
+                
+                // Reset jump early flag when landing (for consistency)
+                _endedJumpEarly = false;
                 
                 GroundedChanged?.Invoke(true, Mathf.Abs(_frameVelocity.y));
             }
@@ -150,7 +159,8 @@ namespace TarodevController
 
         private void HandleJump()
         {
-            if (!_endedJumpEarly && !_grounded && !_frameInput.JumpHeld && _rb.linearVelocity.y > 0) _endedJumpEarly = true;
+            // Removed variable jump height - all jumps are now the same height
+            // if (!_endedJumpEarly && !_grounded && !_frameInput.JumpHeld && _rb.linearVelocity.y > 0) _endedJumpEarly = true;
 
             if (!_jumpToConsume && !HasBufferedJump) return;
 
@@ -177,7 +187,7 @@ namespace TarodevController
 
         private void ExecuteJump()
         {
-            _endedJumpEarly = false;
+            // Removed _endedJumpEarly reset since we're not using variable jump height
             _timeJumpWasPressed = 0;
             _bufferedJumpUsable = false;
             _coyoteUsable = false;
@@ -253,8 +263,8 @@ namespace TarodevController
             }
             else
             {
+                // Removed variable jump height - always use normal gravity
                 var inAirGravity = _stats.FallAcceleration;
-                if (_endedJumpEarly && _frameVelocity.y > 0) inAirGravity *= _stats.JumpEndEarlyGravityModifier;
                 _frameVelocity.y = Mathf.MoveTowards(_frameVelocity.y, -_stats.MaxFallSpeed, inAirGravity * Time.fixedDeltaTime);
             }
         }
@@ -279,7 +289,7 @@ namespace TarodevController
             // Reset jump states
             _jumpToConsume = false;
             _bufferedJumpUsable = false;
-            _endedJumpEarly = false;
+            _endedJumpEarly = false; // Keep for consistency but not used for variable jump height
             _coyoteUsable = false;
             _timeJumpWasPressed = 0;
             
