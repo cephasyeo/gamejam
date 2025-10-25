@@ -21,11 +21,12 @@ public class OrbShooter : MonoBehaviour
     [Header("Orb Prefabs")]
     public GameObject redOrbPrefab;
     public GameObject greenOrbPrefab;
+    public GameObject whiteOrbPrefab;
 
     private bool isShooting = false;
     private Coroutine shootingCoroutine;
 
-    public enum OrbType { Red, Green }
+    public enum OrbType { Red, Green, White }
 
     private void Start()
     {
@@ -43,7 +44,7 @@ public class OrbShooter : MonoBehaviour
     {
         if (isShooting) return;
         if (orbSequence.Count == 0) return;
-        if (redOrbPrefab == null || greenOrbPrefab == null) return;
+        if (redOrbPrefab == null || greenOrbPrefab == null || whiteOrbPrefab == null) return;
 
         isShooting = true;
         shootingCoroutine = StartCoroutine(ShootingLoop());
@@ -137,6 +138,7 @@ public class OrbShooter : MonoBehaviour
         {
             case OrbType.Red: return redOrbPrefab;
             case OrbType.Green: return greenOrbPrefab;
+            case OrbType.White: return whiteOrbPrefab;
             default: return null;
         }
     }

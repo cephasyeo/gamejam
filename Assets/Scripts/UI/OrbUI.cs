@@ -52,6 +52,9 @@ public class OrbUI : MonoBehaviour
             case OrbAbility.Dash:
                 orbColor = new Color(0.216f, 0.851f, 0.549f, 1f); // Green color
                 break;
+            case OrbAbility.Reset:
+                orbColor = Color.white; // White color
+                break;
         }
         
         SetupOrbAppearance();

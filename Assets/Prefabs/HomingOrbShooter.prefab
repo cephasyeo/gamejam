@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &7395406560104046771
+--- !u!1 &2870707667864345020
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,49 +8,48 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 6860233407160625147}
-  - component: {fileID: 2792913771623095764}
+  - component: {fileID: 7972137643593641715}
+  - component: {fileID: 5424327750818624308}
   m_Layer: 0
-  m_Name: OrbShooter
+  m_Name: HomingOrbShooter
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &6860233407160625147
+--- !u!4 &7972137643593641715
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7395406560104046771}
+  m_GameObject: {fileID: 2870707667864345020}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 109.54424, y: -3.87813, z: 0}
+  m_LocalPosition: {x: 56.22, y: 10.55, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2792913771623095764
+--- !u!114 &5424327750818624308
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7395406560104046771}
+  m_GameObject: {fileID: 2870707667864345020}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cb46d5f5cdf362e4eb8bc046f4425ab7, type: 3}
+  m_Script: {fileID: 11500000, guid: 8285d591bd42fd44988eccb53c85bead, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::OrbShooter
-  shootInterval: 2
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerTargetingOrbShooter
+  shootInterval: 1
   orbSpeed: 10
   startShootingOnAwake: 1
   loopShooting: 1
-  shootDirection: {x: 0, y: -1}
-  normalizeDirection: 1
-  orbSequence: 0000000001000000
-  redOrbPrefab: {fileID: 753568689954396402, guid: 4e04804f3610d31448ae9001c5555eff, type: 3}
-  greenOrbPrefab: {fileID: 8594048468218813765, guid: ac6b5a4a38df3984ab471f45c19c913a, type: 3}
+  playerTransform: {fileID: 0}
+  targetingRange: 20
+  orbSequence: 02000000
   whiteOrbPrefab: {fileID: 2148215796278044752, guid: 528bbbccd96bf4d459c2dcfb4375116c, type: 3}
+  debugMode: 0

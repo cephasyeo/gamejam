@@ -56,6 +56,12 @@ public class Orb : MonoBehaviour
 
             // Optional: rotate while moving
             transform.Rotate(0, 0, rotationSpeed * Time.deltaTime);
+            
+            // Destroy orb if it goes below Y = -10f
+            if (transform.position.y < -10f)
+            {
+                Destroy(gameObject);
+            }
         }
         else
         {

@@ -42,6 +42,7 @@ public enum OrbAbility
 {
     Jump,
     Dash,
+    Reset, // White orb that resets player to default state
     // Future abilities can be added here
 }
 

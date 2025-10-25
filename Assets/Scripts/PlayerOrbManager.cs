@@ -364,6 +364,18 @@ public class PlayerOrbManager : MonoBehaviour
     {
         if (orbStats == null) return;
         
+        // Handle white orb (reset orb) - always resets player to default
+        if (orbStats.ability == OrbAbility.Reset)
+        {
+            ResetPlayerToDefault();
+            
+            if (debugMode)
+            {
+                Debug.Log("White orb collected - player reset to default state");
+            }
+            return;
+        }
+        
         // Mark that player has collected an orb
         hasEverCollectedOrb = true;
         
