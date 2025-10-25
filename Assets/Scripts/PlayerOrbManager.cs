@@ -41,6 +41,10 @@ public class PlayerOrbManager : MonoBehaviour
     [SerializeField] private float yellowOrbLifetime = 5f; // How long the orb exists before destroying
     [SerializeField] private float lastShotTime = 0f;
     
+    [Header("Yellow Orb SFX")]
+    [SerializeField] private AudioClip yellowOrbShootSound;
+    [SerializeField] private AudioSource audioSource;
+    
     [Header("Debug")]
     [SerializeField] public bool debugMode = false; // Disabled for better performance
     
@@ -59,6 +63,8 @@ public class PlayerOrbManager : MonoBehaviour
             playerController = GetComponent<PlayerController>();
         if (playerSpriteRenderer == null)
             playerSpriteRenderer = GetComponent<SpriteRenderer>();
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>();
             
         playerRigidbody = GetComponent<Rigidbody2D>();
         
@@ -656,6 +662,9 @@ public class PlayerOrbManager : MonoBehaviour
         // Update last shot time
         lastShotTime = Time.time;
         
+        // Play shooting sound effect
+        PlayShootSound();
+        
         if (debugMode)
         {
             Debug.Log($"Shot yellow orb towards {targetPosition}");
@@ -683,6 +692,21 @@ public class PlayerOrbManager : MonoBehaviour
     public float GetYellowOrbFireRate()
     {
         return yellowOrbFireRate;
+    }
+    
+    /// <summary>
+    /// Plays the yellow orb shooting sound effect.
+    /// </summary>
+    private void PlayShootSound()
+    {
+        if (audioSource != null && yellowOrbShootSound != null)
+        {
+            audioSource.PlayOneShot(yellowOrbShootSound);
+        }
+        else if (debugMode)
+        {
+            Debug.LogWarning("PlayerOrbManager: AudioSource or yellowOrbShootSound not assigned!");
+        }
     }
     
     public bool IsDashing()
