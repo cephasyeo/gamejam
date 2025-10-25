@@ -16,6 +16,11 @@ GameObject:
   - component: {fileID: 200338670639618891}
   - component: {fileID: 4559599616869201912}
   - component: {fileID: 2806237573440790626}
+  - component: {fileID: 9007313074849137100}
+  - component: {fileID: -2509282142807526547}
+  - component: {fileID: 8906067347290163985}
+  - component: {fileID: 2556741904521382184}
+  - component: {fileID: 620722888660975148}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -218,22 +223,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1547810dc65813d4ab74c0ab022fb148, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerOrbManager
-  playerController: {fileID: 1504537238924651948}
-  playerSpriteRenderer: {fileID: 6666239526575469390}
-  playerStats: {fileID: 11400000, guid: 8f22c114339ff0c41a9024a330d0c68e, type: 2}
-  inputHandler: {fileID: 2806237573440790626}
-  whiteSprite: {fileID: 2834879143909207370, guid: 4a92610318ec31043ab38f6cb556cad7, type: 3}
-  redSprite: {fileID: -9219349313646832486, guid: f9a7730eabaf1f54c85f2ca4b6caab14, type: 3}
-  greenSprite: {fileID: 6133608761660465997, guid: f9a7730eabaf1f54c85f2ca4b6caab14, type: 3}
-  currentOrbStats: {fileID: 0}
-  currentStackCount: 0
-  currentAbility: 0
-  remainingAirJumps: 0
-  remainingDashes: 0
-  dashCooldownTimer: 0.5
-  isDashing: 0
-  dashDirection: {x: 0, y: 0}
-  dashTimer: 0
+  dashSystem: {fileID: 9007313074849137100}
+  yellowOrbShooter: {fileID: -2509282142807526547}
+  spriteManager: {fileID: 8906067347290163985}
+  orbCollector: {fileID: 2556741904521382184}
   debugMode: 1
 --- !u!114 &2806237573440790626
 MonoBehaviour:
@@ -252,3 +245,177 @@ MonoBehaviour:
   jumpPressed: 0
   jumpHeld: 0
   dashPressed: 0
+--- !u!114 &9007313074849137100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6690243634310070616}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77d9e36369ee66b4d802b115d2ba6c8a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DashSystem
+  remainingDashes: 0
+  dashCooldownTimer: 0
+  isDashing: 0
+  dashDirection: {x: 0, y: 0}
+  dashTimer: 0
+  playerController: {fileID: 1504537238924651948}
+  inputHandler: {fileID: 2806237573440790626}
+  playerStats: {fileID: 11400000, guid: 8f22c114339ff0c41a9024a330d0c68e, type: 2}
+  playerSpriteRenderer: {fileID: 6666239526575469390}
+  debugMode: 0
+--- !u!114 &-2509282142807526547
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6690243634310070616}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d0432364e55ee647a003448fd196fd4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::YellowOrbShooter
+  canShootYellowOrbs: 0
+  yellowOrbPrefab: {fileID: 462134576831118452, guid: 5b3136d7c91d14545a27aa0befdf467d, type: 3}
+  yellowOrbFireRate: 0.5
+  yellowOrbSpeed: 15
+  yellowOrbLifetime: 5
+  lastShotTime: 0
+  yellowOrbShootSound: {fileID: 8300000, guid: 6fef142c68f194649a115d935a48782e, type: 3}
+  audioSource: {fileID: 620722888660975148}
+  debugMode: 0
+--- !u!114 &8906067347290163985
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6690243634310070616}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9453a4072b58b1543a64df04791b4666, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSpriteManager
+  whiteSprite: {fileID: 2834879143909207370, guid: 4a92610318ec31043ab38f6cb556cad7, type: 3}
+  redSprite: {fileID: -9219349313646832486, guid: f9a7730eabaf1f54c85f2ca4b6caab14, type: 3}
+  greenSprite: {fileID: 6133608761660465997, guid: f9a7730eabaf1f54c85f2ca4b6caab14, type: 3}
+  playerSpriteRenderer: {fileID: 6666239526575469390}
+  debugMode: 0
+--- !u!114 &2556741904521382184
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6690243634310070616}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0128d63df745e3848b345c8c0db52175, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OrbCollector
+  currentOrbStats: {fileID: 0}
+  currentStackCount: 0
+  currentAbility: 0
+  remainingAirJumps: 0
+  debugMode: 0
+--- !u!82 &620722888660975148
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6690243634310070616}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4

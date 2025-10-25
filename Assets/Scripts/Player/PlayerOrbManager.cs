@@ -1,624 +1,291 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using TarodevController;
 using System;
 
+/// <summary>
+/// Main coordinator for player orb-related functionality.
+/// Delegates to specialized components for better modularity.
+/// </summary>
 public class PlayerOrbManager : MonoBehaviour
 {
-    [Header("Player References")]
-    [SerializeField] private PlayerController playerController;
-    [SerializeField] private SpriteRenderer playerSpriteRenderer;
-    [SerializeField] private ScriptableStats playerStats;
-    [SerializeField] private PlayerInputHandler inputHandler;
-    
-    [Header("Character Sprites")]
-    [SerializeField] private Sprite whiteSprite;  // Default white character
-    [SerializeField] private Sprite redSprite;    // Red character for jump ability
-    [SerializeField] private Sprite greenSprite; // Green character for dash ability
-    
-    [Header("Current Orb State")]
-    [SerializeField] private OrbStats currentOrbStats;
-    [SerializeField] private int currentStackCount = 0;
-    [SerializeField] private OrbAbility currentAbility = OrbAbility.Jump;
-    
-    [Header("Jump Counter")]
-    [SerializeField] private int remainingAirJumps = 0;
-    
-    [Header("Dash Counter")]
-    [SerializeField] private int remainingDashes = 0;
-    
-    [Header("Dash Settings")]
-    [SerializeField] private float dashCooldownTimer = 0f;
-    [SerializeField] private bool isDashing = false;
-    [SerializeField] private Vector2 dashDirection;
-    [SerializeField] private float dashTimer = 0f;
-    
-    [Header("Yellow Orb Shooting")]
-    [SerializeField] private bool canShootYellowOrbs = false;
-    [SerializeField] private GameObject yellowOrbPrefab;
-    [SerializeField] private float yellowOrbFireRate = 0.5f; // Time between shots
-    [SerializeField] private float yellowOrbSpeed = 15f;
-    [SerializeField] private float yellowOrbLifetime = 5f; // How long the orb exists before destroying
-    [SerializeField] private float lastShotTime = 0f;
-    
-    [Header("Yellow Orb SFX")]
-    [SerializeField] private AudioClip yellowOrbShootSound;
-    [SerializeField] private AudioSource audioSource;
+    [Header("Component References")]
+    [SerializeField] private DashSystem dashSystem;
+    [SerializeField] private YellowOrbShooter yellowOrbShooter;
+    [SerializeField] private PlayerSpriteManager spriteManager;
+    [SerializeField] private OrbCollector orbCollector;
     
     [Header("Debug")]
-    [SerializeField] public bool debugMode = false; // Disabled for better performance
+    [SerializeField] public bool debugMode = false;
     
-    // Events for UI updates
+    // Events for UI updates (delegated from components)
     public event Action<int, int> OnOrbStacksChanged; // redStacks, greenStacks
-    
-    private Rigidbody2D playerRigidbody;
-    
-    // Track if player has ever collected an orb to preserve color
-    private bool hasEverCollectedOrb = false;
     
     private void Awake()
     {
-        // Get components
-        if (playerController == null)
-            playerController = GetComponent<PlayerController>();
-        if (playerSpriteRenderer == null)
-            playerSpriteRenderer = GetComponent<SpriteRenderer>();
-        if (audioSource == null)
-            audioSource = GetComponent<AudioSource>();
-            
-        playerRigidbody = GetComponent<Rigidbody2D>();
+        // Get components if not assigned
+        if (dashSystem == null)
+            dashSystem = GetComponent<DashSystem>();
+        if (yellowOrbShooter == null)
+            yellowOrbShooter = GetComponent<YellowOrbShooter>();
+        if (spriteManager == null)
+            spriteManager = GetComponent<PlayerSpriteManager>();
+        if (orbCollector == null)
+            orbCollector = GetComponent<OrbCollector>();
         
-        // Store the initial red sprite if not assigned
-        if (redSprite == null && playerSpriteRenderer != null)
+        // Subscribe to component events
+        SubscribeToComponentEvents();
+    }
+    
+    /// <summary>
+    /// Subscribes to component events for coordination.
+    /// </summary>
+    private void SubscribeToComponentEvents()
+    {
+        // Subscribe to orb collector events
+        if (orbCollector != null)
         {
-            redSprite = playerSpriteRenderer.sprite;
+            orbCollector.OnOrbStacksChanged += OnOrbStacksChanged;
+            orbCollector.OnOrbCollected += OnOrbCollected;
+            orbCollector.OnPlayerReset += OnPlayerReset;
+        }
+        
+        // Subscribe to dash system events
+        if (dashSystem != null)
+        {
+            dashSystem.OnDashCountChanged += OnDashCountChanged;
+        }
+        
+        // Subscribe to sprite manager events
+        if (spriteManager != null)
+        {
+            spriteManager.OnSpriteChanged += OnSpriteChanged;
         }
     }
     
-    private void Update()
+    /// <summary>
+    /// Handles orb collection events from OrbCollector.
+    /// </summary>
+    private void OnOrbCollected(OrbStats orbStats)
     {
-        // Handle dash input in Update for responsive input
-        HandleDashInput();
-        UpdateDashCooldown();
-    }
-    
-    private void FixedUpdate()
-    {
-        // Handle dash movement in FixedUpdate for consistent physics timing
-        UpdateDashMovement();
-    }
-    
-    private void HandleDashInput()
-    {
-        if (inputHandler == null) 
+        // Update sprite when orb is collected
+        if (spriteManager != null)
         {
-            if (debugMode)
-            {
-                Debug.Log("InputHandler is null!");
-            }
-            return;
+            spriteManager.ChangePlayerSprite(orbStats.ability);
         }
         
-        bool dashInput = inputHandler.GetDashPressed();
-        if (debugMode && dashInput)
+        // Update dash count when green orb is collected
+        if (orbStats.ability == OrbAbility.Dash && dashSystem != null)
         {
-            Debug.Log($"Dash input detected! Current ability: {currentAbility}, Remaining dashes: {remainingDashes}, Is dashing: {isDashing}");
-        }
-        
-        if (currentAbility != OrbAbility.Dash) 
-        {
-            if (debugMode && dashInput)
-            {
-                Debug.Log($"Dash input detected but current ability is: {currentAbility}, need Dash ability");
-            }
-            return;
-        }
-        if (isDashing) return;
-        if (remainingDashes <= 0) 
-        {
-            if (debugMode && dashInput)
-            {
-                Debug.Log($"Dash input detected but no remaining dashes: {remainingDashes}");
-            }
-            return;
-        }
-        
-        Vector2 inputDirection = inputHandler.GetMoveInput();
-        
-        if (dashInput)
-        {
-            Vector2 dashDirection = Vector2.zero;
-            
-            // Only allow horizontal dashes (left/right)
-            if (Mathf.Abs(inputDirection.x) > 0.1f)
-            {
-                // Use horizontal input direction only (ignore vertical)
-                dashDirection = inputDirection.x > 0 ? Vector2.right : Vector2.left;
-                if (debugMode)
-                {
-                    Debug.Log($"Dash input detected! Using horizontal input direction: {dashDirection}");
-                }
-            }
-            else
-            {
-                // No horizontal input, use character facing direction from sprite
-                if (playerSpriteRenderer != null)
-                {
-                    // Check if sprite is flipped (facing left)
-                    bool facingLeft = playerSpriteRenderer.flipX;
-                    dashDirection = facingLeft ? Vector2.left : Vector2.right;
-                }
-                else
-                {
-                    // Fallback: check transform scale
-                    if (transform.localScale.x < 0)
-                    {
-                        dashDirection = Vector2.left;
-                    }
-                    else
-                    {
-                        dashDirection = Vector2.right;
-                    }
-                }
-                
-                if (debugMode)
-                {
-                    Debug.Log($"Dash input detected! Using character facing direction: {dashDirection}");
-                }
-            }
-            
-            StartDash(dashDirection);
+            dashSystem.AddDashes(1);
         }
     }
     
-    private void StartDash(Vector2 direction)
+    /// <summary>
+    /// Handles player reset events from OrbCollector.
+    /// </summary>
+    private void OnPlayerReset()
     {
-        if (playerStats == null) 
+        // Reset sprite to default when player is reset
+        if (spriteManager != null)
         {
-            Debug.LogError("PlayerStats is null! Cannot start dash.");
-            return;
-        }
-        if (playerRigidbody == null) 
-        {
-            Debug.LogError("PlayerRigidbody is null! Cannot start dash.");
-            return;
+            spriteManager.SetDefaultSprite();
         }
         
-        isDashing = true;
-        dashDirection = direction;
-        dashTimer = playerStats.DashDistance / playerStats.DashSpeed;
-        dashCooldownTimer = playerStats.DashCooldown;
-        
-        if (debugMode)
+        // Reset dash count when player is reset
+        if (dashSystem != null)
         {
-            Debug.Log($"Dash timer calculation: {playerStats.DashDistance} / {playerStats.DashSpeed} = {dashTimer}");
+            dashSystem.ResetDashCount();
         }
-        
-        // Consume one dash
-        remainingDashes--;
-        
-        // Update UI after consuming dash
+    }
+    
+    /// <summary>
+    /// Handles dash count changes from DashSystem.
+    /// </summary>
+    private void OnDashCountChanged(int remainingDashes)
+    {
+        // Trigger UI update with current dash count
         TriggerUIUpdate();
-        
-        // Play dash SFX
-        if (AudioManager.Instance != null)
-        {
-            AudioManager.Instance.PlayDashSFX();
-        }
-        
-        
+    }
+    
+    /// <summary>
+    /// Handles sprite changes from PlayerSpriteManager.
+    /// </summary>
+    private void OnSpriteChanged(OrbAbility ability)
+    {
         if (debugMode)
         {
-            Debug.Log($"Started dash in direction: {direction} for {dashTimer} seconds, remaining dashes: {remainingDashes}");
-            Debug.Log($"Dash parameters - Distance: {playerStats.DashDistance}, Speed: {playerStats.DashSpeed}");
-            Debug.Log($"Player position before dash: {transform.position}");
+            Debug.Log($"PlayerOrbManager: Sprite changed to {ability}");
         }
     }
     
-    private void UpdateDashCooldown()
-    {
-        if (dashCooldownTimer > 0)
-        {
-            dashCooldownTimer -= Time.deltaTime; // Use deltaTime since this is in Update()
-        }
-    }
-    
-    private void UpdateDashMovement()
-    {
-        if (!isDashing) return;
-        if (playerRigidbody == null) return;
-        
-        dashTimer -= Time.fixedDeltaTime;
-        
-        if (dashTimer <= 0)
-        {
-            EndDash();
-        }
-        else
-        {
-            // Check for wall collision during dash
-            if (CheckWallCollision())
-            {
-                if (debugMode)
-                {
-                    Debug.Log("Dash ended early due to wall collision");
-                }
-                EndDash();
-                return;
-            }
-            
-            // During dash: suspend gravity, maintain horizontal movement
-            float dashSpeed = playerStats.DashSpeed;
-            Vector2 dashVelocity = dashDirection * dashSpeed;
-            
-            // Apply dash velocity with NO vertical movement (gravity suspended)
-            playerRigidbody.linearVelocity = dashVelocity;
-        }
-    }
-    
-    private bool CheckWallCollision()
-    {
-        if (playerController == null) return false;
-        
-        // Use the same collision detection as PlayerController but for walls
-        Collider2D col = GetComponent<Collider2D>();
-        if (col == null) return false;
-        
-        // Check for horizontal wall collision in dash direction
-        Vector2 rayDirection = dashDirection;
-        float rayDistance = 0.3f; // Increased distance to reduce false positives
-        
-        // Cast a ray in the dash direction to detect walls
-        RaycastHit2D hit = Physics2D.BoxCast(
-            col.bounds.center, 
-            col.bounds.size, 
-            0, 
-            rayDirection, 
-            rayDistance, 
-            ~playerStats.PlayerLayer
-        );
-        
-        // Only end dash if we hit a solid wall (not triggers)
-        return hit.collider != null && !hit.collider.isTrigger;
-    }
-    
-    private void EndDash()
-    {
-        isDashing = false;
-        dashTimer = 0f;
-        
-        // Sync PlayerController's frame velocity with current rigidbody velocity
-        if (playerController != null && playerRigidbody != null)
-        {
-            // Get the current rigidbody velocity
-            Vector2 currentVelocity = playerRigidbody.linearVelocity;
-            
-            // Preserve horizontal momentum but reduce it slightly for more natural feel
-            // Keep vertical velocity as-is to maintain natural physics
-            Vector2 newVelocity = new Vector2(currentVelocity.x * 0.8f, currentVelocity.y);
-            playerRigidbody.linearVelocity = newVelocity;
-            
-            if (debugMode)
-            {
-                Debug.Log($"Dash ended - synced velocity: {newVelocity}");
-            }
-        }
-        else
-        {
-            if (debugMode)
-            {
-                Debug.Log("Dash ended - returning control to PlayerController");
-            }
-        }
-    }
-    
-    private void ChangePlayerSprite(OrbAbility ability)
-    {
-        if (playerSpriteRenderer == null) return;
-        
-        switch (ability)
-        {
-            case OrbAbility.Jump:
-                // Red sprite for jump ability
-                if (redSprite != null)
-                {
-                    playerSpriteRenderer.sprite = redSprite;
-                    if (debugMode)
-                    {
-                        Debug.Log("Changed to red sprite (Jump ability)");
-                    }
-                }
-                break;
-                
-            case OrbAbility.Dash:
-                // Green sprite for dash ability
-                if (greenSprite != null)
-                {
-                    playerSpriteRenderer.sprite = greenSprite;
-                    if (debugMode)
-                    {
-                        Debug.Log("Changed to green sprite (Dash ability)");
-                    }
-                }
-                break;
-        }
-    }
-    
-    private void SetDefaultSprite()
-    {
-        if (playerSpriteRenderer == null) return;
-        
-        // Set to white/default sprite when no orbs are collected
-        if (whiteSprite != null)
-        {
-            playerSpriteRenderer.sprite = whiteSprite;
-            if (debugMode)
-            {
-                Debug.Log("Changed to white sprite (default)");
-            }
-        }
-    }
-    
+    /// <summary>
+    /// Triggers UI update with current stack counts.
+    /// </summary>
     private void TriggerUIUpdate()
     {
-        // Calculate current stacks based on remaining abilities
-        int redStacks = (currentAbility == OrbAbility.Jump) ? remainingAirJumps : 0;
-        int greenStacks = (currentAbility == OrbAbility.Dash) ? remainingDashes : 0;
+        if (orbCollector == null) return;
+        
+        // Get current stacks from orb collector
+        int redStacks = orbCollector.RemainingAirJumps;
+        int greenStacks = dashSystem != null ? dashSystem.RemainingDashes : 0;
         
         // Trigger UI update event
         OnOrbStacksChanged?.Invoke(redStacks, greenStacks);
         
         if (debugMode)
         {
-            Debug.Log($"UI Update: Red stacks: {redStacks}, Green stacks: {greenStacks}");
+            Debug.Log($"PlayerOrbManager: UI Update - Red stacks: {redStacks}, Green stacks: {greenStacks}");
         }
     }
     
+    // ===== PUBLIC API METHODS (Delegation to Components) =====
+    
+    /// <summary>
+    /// Collects an orb and updates player state.
+    /// </summary>
     public void CollectOrb(OrbStats orbStats)
     {
-        if (orbStats == null) return;
-        
-        // Handle white orb (reset orb) - always resets player to default
-        if (orbStats.ability == OrbAbility.Reset)
+        if (orbCollector != null)
         {
-            ResetPlayerToDefault();
-            
-            if (debugMode)
-            {
-                Debug.Log("White orb collected - player reset to default state");
-            }
-            return;
+            orbCollector.CollectOrb(orbStats);
         }
-        
-        // Mark that player has collected an orb
-        hasEverCollectedOrb = true;
-        
-        // Check if this is a different color orb
-        if (currentOrbStats != null && currentOrbStats.orbColor != orbStats.orbColor)
-        {
-            // Switch to new color and reset stacks
-            currentStackCount = 1;
-            currentOrbStats = orbStats;
-            currentAbility = orbStats.ability;
-            
-            // Change sprite to match the new ability
-            ChangePlayerSprite(orbStats.ability);
-            
-            if (debugMode)
-            {
-                Debug.Log($"Switched to {orbStats.orbName} (new color), stacks reset to 1");
-            }
-        }
-        else
-        {
-            // Same color orb - increase stacks
-            if (currentOrbStats == null)
-            {
-                currentOrbStats = orbStats;
-                currentAbility = orbStats.ability;
-                
-                // Change sprite to match the ability
-                ChangePlayerSprite(orbStats.ability);
-            }
-            
-            currentStackCount = Mathf.Min(currentStackCount + 1, orbStats.maxStacks);
-            
-            if (debugMode)
-            {
-                Debug.Log($"Collected {orbStats.orbName}, stacks: {currentStackCount}");
-            }
-        }
-        
-        // Update air jump counter for red orbs
-        if (orbStats.ability == OrbAbility.Jump)
-        {
-            // Each red orb gives 1 air jump, add to existing count
-            remainingAirJumps += 1;
-            if (debugMode)
-            {
-                Debug.Log($"Red orb collected! Stacks: {currentStackCount}, Air jumps: {remainingAirJumps}");
-            }
-        }
-        
-        // Update dash counter for green orbs
-        if (orbStats.ability == OrbAbility.Dash)
-        {
-            // Each green orb gives 1 dash, add to existing count
-            remainingDashes += 1;
-            if (debugMode)
-            {
-                Debug.Log($"Green orb collected! Stacks: {currentStackCount}, Dashes: {remainingDashes}, Ability: {currentAbility}");
-            }
-        }
-        
-        // Update UI after collecting orb
-        TriggerUIUpdate();
-        
-        // Play orb collect SFX
-        if (AudioManager.Instance != null)
-        {
-            AudioManager.Instance.PlayOrbCollectSFX();
-        }
-    }
-    
-    public int GetCurrentStackCount()
-    {
-        return currentStackCount;
-    }
-    
-    public OrbAbility GetCurrentAbility()
-    {
-        return currentAbility;
-    }
-    
-    public OrbStats GetCurrentOrbStats()
-    {
-        return currentOrbStats;
-    }
-    
-    public bool CanJump()
-    {
-        // Player can always jump, orbs just enhance the power
-        return true;
-    }
-    
-    public float GetJumpPowerMultiplier()
-    {
-        if (currentAbility != OrbAbility.Jump || currentOrbStats == null) return 1f;
-        return Mathf.Pow(currentOrbStats.jumpPowerMultiplier, currentStackCount);
-    }
-    
-    public bool CanAirJump()
-    {
-        return remainingAirJumps > 0;
-    }
-    
-    public void ConsumeAirJump()
-    {
-        if (remainingAirJumps > 0)
-        {
-            remainingAirJumps--;
-            if (debugMode)
-            {
-                Debug.Log($"Used air jump! Remaining: {remainingAirJumps}");
-            }
-            
-            // Update UI after consuming air jump
-            TriggerUIUpdate();
-        }
-        else
-        {
-            if (debugMode)
-            {
-                Debug.Log("Tried to use air jump but none remaining!");
-            }
-        }
-    }
-    
-    public void ResetAirJumps()
-    {
-        remainingAirJumps = 0;
-        if (debugMode)
-        {
-            Debug.Log("Air jumps reset (landed on ground)");
-        }
-        
-        // Update UI after resetting air jumps
-        TriggerUIUpdate();
-    }
-    
-    public int GetRemainingAirJumps()
-    {
-        return remainingAirJumps;
-    }
-    
-    public void ResetDashCount()
-    {
-        remainingDashes = 0;
-        if (debugMode)
-        {
-            Debug.Log("Dash count reset to 0");
-        }
-        
-        // Update UI after resetting dash count
-        TriggerUIUpdate();
-    }
-    
-    public void ClearAllOrbs()
-    {
-        // Reset all orb counters
-        remainingAirJumps = 0;
-        remainingDashes = 0;
-        
-        // Reset orb stats and ability
-        currentOrbStats = null;
-        currentAbility = OrbAbility.Jump;
-        currentStackCount = 0;
-        
-        // Only change back to default white sprite if player has never collected an orb
-        if (!hasEverCollectedOrb)
-        {
-            SetDefaultSprite();
-        }
-        
-        if (debugMode)
-        {
-            Debug.Log($"All orbs cleared - player landed on ground. Has ever collected orb: {hasEverCollectedOrb}");
-        }
-        
-        // Update UI to reflect cleared orbs
-        TriggerUIUpdate();
-    }
-    
-    public void ResetPlayerToDefault()
-    {
-        // Reset all orb counters
-        remainingAirJumps = 0;
-        remainingDashes = 0;
-        
-        // Reset orb stats and ability
-        currentOrbStats = null;
-        currentAbility = OrbAbility.Jump;
-        currentStackCount = 0;
-        
-        // Reset the flag so player goes back to white sprite
-        hasEverCollectedOrb = false;
-        
-        // Change back to default white sprite
-        SetDefaultSprite();
-        
-        if (debugMode)
-        {
-            Debug.Log("Player reset to default state (respawned)");
-        }
-        
-        // Update UI to reflect cleared orbs
-        TriggerUIUpdate();
     }
     
     /// <summary>
-    /// Enables the yellow orb shooting ability.
+    /// Gets the current stack count.
+    /// </summary>
+    public int GetCurrentStackCount()
+    {
+        return orbCollector != null ? orbCollector.CurrentStackCount : 0;
+    }
+    
+    /// <summary>
+    /// Gets the current ability.
+    /// </summary>
+    public OrbAbility GetCurrentAbility()
+    {
+        return orbCollector != null ? orbCollector.CurrentAbility : OrbAbility.Jump;
+    }
+    
+    /// <summary>
+    /// Gets the current orb stats.
+    /// </summary>
+    public OrbStats GetCurrentOrbStats()
+    {
+        return orbCollector != null ? orbCollector.CurrentOrbStats : null;
+    }
+    
+    /// <summary>
+    /// Checks if the player can jump.
+    /// </summary>
+    public bool CanJump()
+    {
+        return true; // Player can always jump, orbs just enhance the power
+    }
+    
+    /// <summary>
+    /// Gets the jump power multiplier.
+    /// </summary>
+    public float GetJumpPowerMultiplier()
+    {
+        return orbCollector != null ? orbCollector.GetJumpPowerMultiplier() : 1f;
+    }
+    
+    /// <summary>
+    /// Checks if the player can air jump.
+    /// </summary>
+    public bool CanAirJump()
+    {
+        return orbCollector != null ? orbCollector.CanAirJump() : false;
+    }
+    
+    /// <summary>
+    /// Consumes an air jump.
+    /// </summary>
+    public void ConsumeAirJump()
+    {
+        if (orbCollector != null)
+        {
+            orbCollector.ConsumeAirJump();
+        }
+    }
+    
+    /// <summary>
+    /// Resets air jumps.
+    /// </summary>
+    public void ResetAirJumps()
+    {
+        if (orbCollector != null)
+        {
+            orbCollector.ResetAirJumps();
+        }
+    }
+    
+    /// <summary>
+    /// Gets remaining air jumps.
+    /// </summary>
+    public int GetRemainingAirJumps()
+    {
+        return orbCollector != null ? orbCollector.RemainingAirJumps : 0;
+    }
+    
+    /// <summary>
+    /// Clears all orbs.
+    /// </summary>
+    public void ClearAllOrbs()
+    {
+        if (orbCollector != null)
+        {
+            orbCollector.ClearAllOrbs();
+        }
+    }
+    
+    /// <summary>
+    /// Resets player to default state.
+    /// </summary>
+    public void ResetPlayerToDefault()
+    {
+        if (orbCollector != null)
+        {
+            orbCollector.ResetPlayerToDefault();
+        }
+    }
+    
+    /// <summary>
+    /// Checks if the player is currently dashing.
+    /// </summary>
+    public bool IsDashing()
+    {
+        return dashSystem != null ? dashSystem.IsDashing : false;
+    }
+    
+    /// <summary>
+    /// Gets remaining dashes.
+    /// </summary>
+    public int GetRemainingDashes()
+    {
+        return dashSystem != null ? dashSystem.RemainingDashes : 0;
+    }
+    
+    /// <summary>
+    /// Enables yellow orb shooting.
     /// </summary>
     public void EnableYellowOrbShooting()
     {
-        canShootYellowOrbs = true;
-        
-        if (debugMode)
+        if (yellowOrbShooter != null)
         {
-            Debug.Log("Yellow orb shooting ability enabled!");
+            yellowOrbShooter.EnableYellowOrbShooting();
         }
     }
     
     /// <summary>
-    /// Disables the yellow orb shooting ability.
+    /// Disables yellow orb shooting.
     /// </summary>
     public void DisableYellowOrbShooting()
     {
-        canShootYellowOrbs = false;
-        
-        if (debugMode)
+        if (yellowOrbShooter != null)
         {
-            Debug.Log("Yellow orb shooting ability disabled!");
+            yellowOrbShooter.DisableYellowOrbShooting();
         }
     }
     
@@ -627,50 +294,15 @@ public class PlayerOrbManager : MonoBehaviour
     /// </summary>
     public bool CanShootYellowOrbs()
     {
-        return canShootYellowOrbs;
+        return yellowOrbShooter != null ? yellowOrbShooter.CanShootYellowOrbs() : false;
     }
     
     /// <summary>
-    /// Attempts to shoot a yellow orb towards the target position.
+    /// Attempts to shoot a yellow orb.
     /// </summary>
     public bool TryShootYellowOrb(Vector2 targetPosition)
     {
-        if (!canShootYellowOrbs || yellowOrbPrefab == null)
-        {
-            return false;
-        }
-        
-        // Check fire rate
-        if (Time.time - lastShotTime < yellowOrbFireRate)
-        {
-            return false;
-        }
-        
-        // Calculate direction from player to target
-        Vector2 direction = (targetPosition - (Vector2)transform.position).normalized;
-        
-        // Create yellow orb
-        GameObject yellowOrb = Instantiate(yellowOrbPrefab, transform.position, Quaternion.identity);
-        
-        // Set up the yellow orb
-        YellowOrb yellowOrbScript = yellowOrb.GetComponent<YellowOrb>();
-        if (yellowOrbScript != null)
-        {
-            yellowOrbScript.Initialize(direction, yellowOrbSpeed, yellowOrbLifetime);
-        }
-        
-        // Update last shot time
-        lastShotTime = Time.time;
-        
-        // Play shooting sound effect
-        PlayShootSound();
-        
-        if (debugMode)
-        {
-            Debug.Log($"Shot yellow orb towards {targetPosition}");
-        }
-        
-        return true;
+        return yellowOrbShooter != null ? yellowOrbShooter.TryShootYellowOrb(targetPosition) : false;
     }
     
     /// <summary>
@@ -678,11 +310,9 @@ public class PlayerOrbManager : MonoBehaviour
     /// </summary>
     public void SetYellowOrbFireRate(float newFireRate)
     {
-        yellowOrbFireRate = newFireRate;
-        
-        if (debugMode)
+        if (yellowOrbShooter != null)
         {
-            Debug.Log($"Yellow orb fire rate set to: {newFireRate}");
+            yellowOrbShooter.SetYellowOrbFireRate(newFireRate);
         }
     }
     
@@ -691,32 +321,6 @@ public class PlayerOrbManager : MonoBehaviour
     /// </summary>
     public float GetYellowOrbFireRate()
     {
-        return yellowOrbFireRate;
+        return yellowOrbShooter != null ? yellowOrbShooter.GetYellowOrbFireRate() : 0.5f;
     }
-    
-    /// <summary>
-    /// Plays the yellow orb shooting sound effect.
-    /// </summary>
-    private void PlayShootSound()
-    {
-        if (audioSource != null && yellowOrbShootSound != null)
-        {
-            audioSource.PlayOneShot(yellowOrbShootSound);
-        }
-        else if (debugMode)
-        {
-            Debug.LogWarning("PlayerOrbManager: AudioSource or yellowOrbShootSound not assigned!");
-        }
-    }
-    
-    public bool IsDashing()
-    {
-        return isDashing;
-    }
-    
-    public int GetRemainingDashes()
-    {
-        return remainingDashes;
-    }
-    
 }
