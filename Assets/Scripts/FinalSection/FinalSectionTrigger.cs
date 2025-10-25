@@ -3,7 +3,6 @@ using UnityEngine;
 public class FinalSectionTrigger : MonoBehaviour
 {
     [Header("Trigger Settings")]
-    [SerializeField] private bool oneTimeUse = true;
     [SerializeField] private bool debugMode = true;
     
     [Header("Effects")]

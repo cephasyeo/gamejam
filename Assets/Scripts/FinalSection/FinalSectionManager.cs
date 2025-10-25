@@ -145,135 +145,170 @@ public class FinalSectionManager : MonoBehaviour
     /// </summary>
     private void ConstrainPlayerToCamera()
     {
-        if (player == null || mainCamera == null) return;
+        if (player == null) return;
         
         // Calculate camera boundaries
         float cameraHeight = 2f * mainCamera.orthographicSize;
         float cameraWidth = cameraHeight * mainCamera.aspect;
         
-        Vector3 cameraPos = frozenCameraPosition;
-        Vector2 playerPos = player.transform.position;
+        float leftBound = frozenCameraPosition.x - cameraWidth / 2f;
+        float rightBound = frozenCameraPosition.x + cameraWidth / 2f;
+        float bottomBound = frozenCameraPosition.y - cameraHeight / 2f;
+        float topBound = frozenCameraPosition.y + cameraHeight / 2f;
         
-        // Calculate camera boundary limits
-        float leftBound = cameraPos.x - cameraWidth/2;
-        float rightBound = cameraPos.x + cameraWidth/2;
-        float bottomBound = cameraPos.y - cameraHeight/2;
-        float topBound = cameraPos.y + cameraHeight/2;
+        // Get player position
+        Vector3 playerPos = player.transform.position;
         
-        // Constrain player to camera boundaries
-        Vector2 constrainedPosition = playerPos;
-        bool wasConstrained = false;
+        // Constrain player position
+        playerPos.x = Mathf.Clamp(playerPos.x, leftBound, rightBound);
+        playerPos.y = Mathf.Clamp(playerPos.y, bottomBound, topBound);
         
-        if (playerPos.x < leftBound)
-        {
-            constrainedPosition.x = leftBound;
-            wasConstrained = true;
-        }
-        else if (playerPos.x > rightBound)
-        {
-            constrainedPosition.x = rightBound;
-            wasConstrained = true;
-        }
-        
-        if (playerPos.y < bottomBound)
-        {
-            constrainedPosition.y = bottomBound;
-            wasConstrained = true;
-        }
-        else if (playerPos.y > topBound)
-        {
-            constrainedPosition.y = topBound;
-            wasConstrained = true;
-        }
-        
-        if (wasConstrained)
-        {
-            player.transform.position = constrainedPosition;
-            
-            if (debugMode)
-            {
-                Debug.Log($"Player constrained to camera boundary at {constrainedPosition}");
-            }
-        }
+        // Apply constrained position
+        player.transform.position = playerPos;
     }
     
     /// <summary>
-    /// Starts shooting purple orbs from all sides.
+    /// Starts purple orb shooting from all shooters.
     /// </summary>
     private void StartPurpleOrbShooting()
     {
+        if (shooterComponents == null || shooterComponents.Length == 0)
+        {
+            Debug.LogError("FinalSectionManager: No shooter components assigned!");
+            return;
+        }
+        
         // Position shooters on camera boundaries
         PositionShootersOnCameraBoundaries();
         
-        // Activate all shooter components
+        // Configure and start each shooter
         foreach (PlayerTargetingOrbShooter shooter in shooterComponents)
         {
             if (shooter != null)
             {
-                // Configure shooter for purple orbs
-                shooter.SetPurpleOrbPrefab(purpleOrbPrefab);
-                shooter.SetShootInterval(1f);
-                shooter.SetOrbSpeed(8f);
-                
-                // Set large targeting range to ensure player is always in range
-                shooter.targetingRange = 50f;
-                
-                // Ensure shooter can see the player and update targeting
-                if (player != null)
-                {
-                    shooter.playerTransform = player.transform;
-                    // Force update player tracking
-                    shooter.ForceUpdatePlayerTracking();
-                }
-                
+                ConfigureShooter(shooter);
                 shooter.StartShooting();
-                
-                if (debugMode)
-                {
-                    Debug.Log($"Activated shooter: {shooter.name} targeting player at {player.transform.position}");
-                }
             }
+        }
+        
+        if (debugMode)
+        {
+            Debug.Log($"Purple orb shooting started with {shooterComponents.Length} shooters");
         }
     }
     
     /// <summary>
-    /// Positions shooters exactly on camera boundaries.
+    /// Positions shooters on camera boundaries.
     /// </summary>
     private void PositionShootersOnCameraBoundaries()
     {
-        if (mainCamera == null || shooterComponents == null) return;
+        if (mainCamera == null) return;
         
         // Calculate camera boundaries
         float cameraHeight = 2f * mainCamera.orthographicSize;
         float cameraWidth = cameraHeight * mainCamera.aspect;
         
-        Vector3 cameraPos = frozenCameraPosition;
-        
-        // Calculate boundary positions with small offset
         float offset = 0.5f;
-        Vector3 northLeftPos = new Vector3(cameraPos.x - cameraWidth/4, cameraPos.y + cameraHeight/2 + offset, cameraPos.z);
-        Vector3 northRightPos = new Vector3(cameraPos.x + cameraWidth/4, cameraPos.y + cameraHeight/2 + offset, cameraPos.z);
-        Vector3 westTopPos = new Vector3(cameraPos.x - cameraWidth/2 - offset, cameraPos.y + cameraHeight/4, cameraPos.z);
-        Vector3 westBottomPos = new Vector3(cameraPos.x - cameraWidth/2 - offset, cameraPos.y - cameraHeight/4, cameraPos.z);
         
-        // Position shooters (2 North, 2 West)
-        if (shooterComponents.Length >= 4)
+        // Position shooters: 2 North, 2 West
+        Vector3 northLeftPos = new Vector3(frozenCameraPosition.x - cameraWidth/4, frozenCameraPosition.y + cameraHeight/2 + offset, frozenCameraPosition.z);
+        Vector3 northRightPos = new Vector3(frozenCameraPosition.x + cameraWidth/4, frozenCameraPosition.y + cameraHeight/2 + offset, frozenCameraPosition.z);
+        Vector3 westTopPos = new Vector3(frozenCameraPosition.x - cameraWidth/2 - offset, frozenCameraPosition.y + cameraHeight/4, frozenCameraPosition.z);
+        Vector3 westBottomPos = new Vector3(frozenCameraPosition.x - cameraWidth/2 - offset, frozenCameraPosition.y - cameraHeight/4, frozenCameraPosition.z);
+        
+        // Set shooter positions and rotations
+        if (shooterComponents.Length >= 1) SetShooterPosition(shooterComponents[0], northLeftPos, 180f);
+        if (shooterComponents.Length >= 2) SetShooterPosition(shooterComponents[1], northRightPos, 180f);
+        if (shooterComponents.Length >= 3) SetShooterPosition(shooterComponents[2], westTopPos, 90f);
+        if (shooterComponents.Length >= 4) SetShooterPosition(shooterComponents[3], westBottomPos, 90f);
+        
+        if (debugMode)
         {
-            shooterComponents[0].transform.position = northLeftPos;   // North Left
-            shooterComponents[1].transform.position = northRightPos; // North Right
-            shooterComponents[2].transform.position = westTopPos;    // West Top
-            shooterComponents[3].transform.position = westBottomPos; // West Bottom
-            
-            // Set shooter rotations to face inward
-            shooterComponents[0].transform.rotation = Quaternion.Euler(0, 0, 180); // North Left faces south
-            shooterComponents[1].transform.rotation = Quaternion.Euler(0, 0, 180); // North Right faces south
-            shooterComponents[2].transform.rotation = Quaternion.Euler(0, 0, 90);  // West Top faces east
-            shooterComponents[3].transform.rotation = Quaternion.Euler(0, 0, 90);  // West Bottom faces east
-            
-            if (debugMode)
-            {
-                Debug.Log($"Positioned shooters: 2 North, 2 West");
-            }
+            Debug.Log($"Positioned {shooterComponents.Length} shooters on camera boundaries");
+        }
+    }
+    
+    /// <summary>
+    /// Sets a shooter's position and rotation.
+    /// </summary>
+    private void SetShooterPosition(PlayerTargetingOrbShooter shooter, Vector3 position, float rotationZ)
+    {
+        if (shooter == null) return;
+        
+        shooter.transform.position = position;
+        shooter.transform.rotation = Quaternion.Euler(0, 0, rotationZ);
+    }
+    
+    /// <summary>
+    /// Configures a shooter with purple orb settings.
+    /// </summary>
+    private void ConfigureShooter(PlayerTargetingOrbShooter shooter)
+    {
+        if (shooter == null) return;
+        
+        // Set purple orb prefab
+        shooter.SetPurpleOrbPrefab(purpleOrbPrefab);
+        
+        // Configure shooting parameters
+        shooter.SetShootInterval(1.5f); // Shoot every 1.5 seconds
+        shooter.SetOrbSpeed(8f); // Moderate speed
+        
+        // Ensure player is always in range
+        shooter.targetingRange = 50f;
+        
+        // Set player transform for real-time targeting
+        if (player != null)
+        {
+            shooter.playerTransform = player.transform;
+            shooter.ForceUpdatePlayerTracking();
+        }
+    }
+    
+    /// <summary>
+    /// Plays effects when the final section starts.
+    /// </summary>
+    private void PlaySectionStartEffects()
+    {
+        // Play particle effect
+        if (sectionStartEffect != null)
+        {
+            sectionStartEffect.Play();
+        }
+        
+        // Play sound effect
+        PlaySound(sectionStartSound);
+        
+        if (debugMode)
+        {
+            Debug.Log("Final section start effects played");
+        }
+    }
+    
+    /// <summary>
+    /// Plays effects when the final section ends.
+    /// </summary>
+    private void PlaySectionEndEffects()
+    {
+        // Play sound effect
+        PlaySound(sectionEndSound);
+        
+        if (debugMode)
+        {
+            Debug.Log("Final section end effects played");
+        }
+    }
+    
+    /// <summary>
+    /// Plays a sound effect.
+    /// </summary>
+    private void PlaySound(AudioClip soundClip)
+    {
+        if (soundClip == null) return;
+        
+        // Play through AudioManager if available
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX(soundClip);
         }
     }
     
@@ -299,10 +334,7 @@ public class FinalSectionManager : MonoBehaviour
             playerOrbManager.SetYellowOrbFireRate(originalFireRate);
         }
         
-        // Resume camera following
-        ResumeCameraFollowing();
-        
-        // Play end effects
+        // Play effects
         PlaySectionEndEffects();
         
         if (debugMode)
@@ -312,91 +344,24 @@ public class FinalSectionManager : MonoBehaviour
     }
     
     /// <summary>
-    /// Resumes camera following the player.
+    /// Handles player death during final section.
     /// </summary>
-    private void ResumeCameraFollowing()
-    {
-        // This would integrate with your existing camera follow system
-        // For now, we just stop forcing the camera position
-        if (debugMode)
-        {
-            Debug.Log("Camera following resumed");
-        }
-    }
-    
-    /// <summary>
-    /// Plays effects when section starts.
-    /// </summary>
-    private void PlaySectionStartEffects()
-    {
-        // Play particle effect
-        if (sectionStartEffect != null)
-        {
-            sectionStartEffect.Play();
-        }
-        
-        // Play sound
-        if (AudioManager.Instance != null && sectionStartSound != null)
-        {
-            AudioManager.Instance.PlaySFX(sectionStartSound);
-        }
-    }
-    
-    /// <summary>
-    /// Plays effects when section ends.
-    /// </summary>
-    private void PlaySectionEndEffects()
-    {
-        // Play sound
-        if (AudioManager.Instance != null && sectionEndSound != null)
-        {
-            AudioManager.Instance.PlaySFX(sectionEndSound);
-        }
-    }
-    
-    /// <summary>
-    /// Called when player gets hit by purple orb.
-    /// </summary>
-    public void OnPlayerHitByPurpleOrb()
+    public void HandlePlayerDeath()
     {
         if (!isFinalSectionActive) return;
         
-        // Freeze game for 1 second
-        StartCoroutine(HandlePlayerDeath());
-    }
-    
-    /// <summary>
-    /// Handles player death sequence.
-    /// </summary>
-    private IEnumerator HandlePlayerDeath()
-    {
-        // Freeze time
-        Time.timeScale = 0f;
-        
-        // Make player blink
-        if (player != null)
+        if (debugMode)
         {
-            StartCoroutine(BlinkPlayerSprite());
+            Debug.Log("Player died during final section - resetting");
         }
         
-        // Wait 1 second (real time)
-        yield return new WaitForSecondsRealtime(1f);
-        
-        // Restore time
-        Time.timeScale = 1f;
-        
-        // Reset final section completely
+        // Reset final section
         ResetFinalSection();
         
         // Respawn player
         if (respawnManager != null)
         {
             respawnManager.ForceRespawn();
-        }
-        
-        if (debugMode)
-        {
-            Debug.Log("Player respawned and final section reset");
         }
     }
     
@@ -421,9 +386,6 @@ public class FinalSectionManager : MonoBehaviour
         {
             playerOrbManager.SetYellowOrbFireRate(originalFireRate);
         }
-        
-        // Resume camera following
-        ResumeCameraFollowing();
         
         // Reactivate the trigger
         if (finalSectionTrigger != null)

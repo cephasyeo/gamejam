@@ -16,11 +16,8 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
     
     // Events
-    public System.Action OnGameStart;
     public System.Action OnGamePause;
     public System.Action OnGameResume;
-    public System.Action OnGameOver;
-    public System.Action OnSceneLoad;
     
     // Game state
     public bool IsGamePaused { get; private set; }
@@ -100,8 +97,6 @@ public class GameManager : MonoBehaviour
     
     private IEnumerator LoadSceneCoroutine(int sceneIndex)
     {
-        OnSceneLoad?.Invoke();
-        
         if (debugMode)
         {
             Debug.Log($"Loading scene index: {sceneIndex}");
@@ -128,8 +123,6 @@ public class GameManager : MonoBehaviour
     
     private IEnumerator LoadSceneCoroutine(string sceneName)
     {
-        OnSceneLoad?.Invoke();
-        
         if (debugMode)
         {
             Debug.Log($"Loading scene: {sceneName}");
@@ -161,7 +154,6 @@ public class GameManager : MonoBehaviour
     public void StartGame()
     {
         IsGameStarted = true;
-        OnGameStart?.Invoke();
         
         if (debugMode)
         {
@@ -213,8 +205,6 @@ public class GameManager : MonoBehaviour
     
     public void GameOver()
     {
-        OnGameOver?.Invoke();
-        
         if (debugMode)
         {
             Debug.Log("Game Over");

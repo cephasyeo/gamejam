@@ -115,7 +115,7 @@ public class PurpleOrb : MonoBehaviour
         // Notify final section manager
         if (finalSectionManager != null)
         {
-            finalSectionManager.OnPlayerHitByPurpleOrb();
+            finalSectionManager.HandlePlayerDeath();
         }
         
         // Destroy this purple orb

@@ -15,7 +15,6 @@ public class DashSystem : MonoBehaviour
     [SerializeField] private float dashTimer = 0f;
     
     [Header("References")]
-    [SerializeField] private PlayerController playerController;
     [SerializeField] private PlayerInputHandler inputHandler;
     [SerializeField] private ScriptableStats playerStats;
     [SerializeField] private SpriteRenderer playerSpriteRenderer;
@@ -35,8 +34,6 @@ public class DashSystem : MonoBehaviour
     private void Awake()
     {
         // Get components
-        if (playerController == null)
-            playerController = GetComponent<PlayerController>();
         if (inputHandler == null)
             inputHandler = GetComponent<PlayerInputHandler>();
         if (playerSpriteRenderer == null)
@@ -214,6 +211,7 @@ public class DashSystem : MonoBehaviour
     
     private bool CheckWallCollision()
     {
+        PlayerController playerController = GetComponent<PlayerController>();
         if (playerController == null) return false;
         
         // Use the same collision detection as PlayerController but for walls
@@ -244,6 +242,7 @@ public class DashSystem : MonoBehaviour
         dashTimer = 0f;
         
         // Sync PlayerController's frame velocity with current rigidbody velocity
+        PlayerController playerController = GetComponent<PlayerController>();
         if (playerController != null && playerRigidbody != null)
         {
             // Get the current rigidbody velocity
