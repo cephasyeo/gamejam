@@ -130,9 +130,22 @@ public class PauseMenu : MonoBehaviour
     
     private void QuitToMainMenu()
     {
+        if (debugMode)
+        {
+            Debug.Log("Quit to main menu requested");
+        }
+        
+        // Resume game time before loading scene
+        Time.timeScale = 1f;
+        
         if (GameManager.Instance != null)
         {
             GameManager.Instance.LoadMainMenu();
+        }
+        else
+        {
+            // Fallback: Load scene 0 directly if GameManager is not available
+            UnityEngine.SceneManagement.SceneManager.LoadScene(0);
         }
         
         HidePauseMenu();

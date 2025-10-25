@@ -3267,7 +3267,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: GAME NAME
+  m_text: HUE HERO
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 4125c3b298439e346a69cc1b9b26580c, type: 2}
   m_sharedMaterial: {fileID: 1602069921429622905, guid: 4125c3b298439e346a69cc1b9b26580c, type: 2}
