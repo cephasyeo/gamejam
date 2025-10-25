@@ -52,7 +52,6 @@ public class PlayerInputHandler : MonoBehaviour
         jumpPressed = jumpAction.WasPressedThisFrame();
         jumpHeld = jumpAction.IsPressed();
         dashPressed = dashAction.WasPressedThisFrame();
-        
     }
     
     public Vector2 GetMoveInput()
@@ -72,6 +71,7 @@ public class PlayerInputHandler : MonoBehaviour
     
     public bool GetDashPressed()
     {
-        return dashPressed;
+        if (dashAction == null) return false;
+        return dashAction.WasPressedThisFrame();
     }
 }

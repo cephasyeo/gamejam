@@ -36,6 +36,20 @@ public class YellowOrb : MonoBehaviour
             spriteRenderer.color = Color.yellow;
         }
         
+        // Debug collider info
+        if (debugMode)
+        {
+            Collider2D col = GetComponent<Collider2D>();
+            if (col != null)
+            {
+                Debug.Log($"YellowOrb collider: IsTrigger={col.isTrigger}, Layer={gameObject.layer}, Tag={gameObject.tag}");
+            }
+            else
+            {
+                Debug.LogError("YellowOrb has no Collider2D component!");
+            }
+        }
+        
         // Destroy after lifetime
         Destroy(gameObject, lifetime);
     }
@@ -48,9 +62,19 @@ public class YellowOrb : MonoBehaviour
         // Rotate while moving
         transform.Rotate(0, 0, 90f * Time.deltaTime);
         
+        // Debug: Log position every second
+        if (debugMode && Time.time - spawnTime > 0 && Mathf.FloorToInt(Time.time - spawnTime) != Mathf.FloorToInt((Time.time - Time.deltaTime) - spawnTime))
+        {
+            Debug.Log($"YellowOrb position: {transform.position}, Direction: {moveDirection}, Speed: {moveSpeed}");
+        }
+        
         // Destroy if it goes below Y = -10f
         if (transform.position.y < -10f)
         {
+            if (debugMode)
+            {
+                Debug.Log("YellowOrb destroyed - went below Y = -10f");
+            }
             Destroy(gameObject);
         }
     }
@@ -74,30 +98,74 @@ public class YellowOrb : MonoBehaviour
         }
     }
     
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (debugMode)
+        {
+            Debug.Log($"YellowOrb OnCollisionEnter2D with: {collision.gameObject.name}");
+        }
+    }
+    
     private void OnTriggerEnter2D(Collider2D other)
     {
-        // Check if it hit another orb
+        if (debugMode)
+        {
+            Debug.Log($"YellowOrb OnTriggerEnter2D called with: {other.name} (Layer: {other.gameObject.layer})");
+        }
+        
+        // Ignore player collisions
+        if (other.CompareTag("Player"))
+        {
+            if (debugMode)
+            {
+                Debug.Log($"YellowOrb ignoring collision with Player");
+            }
+            return;
+        }
+        
+        // Check if it hit another orb (red, green, white)
         Orb otherOrb = other.GetComponent<Orb>();
         if (otherOrb != null)
         {
+            if (debugMode)
+            {
+                Debug.Log($"YellowOrb detected Orb component on: {other.name}");
+            }
             NullifyOrb(otherOrb);
             return;
         }
         
-        // Check if it hit a yellow orb shooter
-        PlayerTargetingOrbShooter shooter = other.GetComponent<PlayerTargetingOrbShooter>();
-        if (shooter != null)
+        // Check if it hit another yellow orb
+        YellowOrb otherYellowOrb = other.GetComponent<YellowOrb>();
+        if (otherYellowOrb != null)
         {
-            NullifyShooter(shooter);
+            if (debugMode)
+            {
+                Debug.Log($"YellowOrb detected YellowOrb component on: {other.name}");
+            }
+            NullifyYellowOrb(otherYellowOrb);
             return;
         }
         
-        // Check if it hit a regular orb shooter
-        OrbShooter regularShooter = other.GetComponent<OrbShooter>();
-        if (regularShooter != null)
+        if (debugMode)
         {
-            NullifyRegularShooter(regularShooter);
-            return;
+            Debug.Log($"YellowOrb collision with {other.name} - no matching components found");
+        }
+    }
+    
+    private void OnTriggerStay2D(Collider2D other)
+    {
+        if (debugMode)
+        {
+            Debug.Log($"YellowOrb OnTriggerStay2D with: {other.name}");
+        }
+    }
+    
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        if (debugMode)
+        {
+            Debug.Log($"YellowOrb OnTriggerExit2D with: {other.name}");
         }
     }
     
@@ -122,46 +190,20 @@ public class YellowOrb : MonoBehaviour
     }
     
     /// <summary>
-    /// Temporarily disables a targeting orb shooter.
+    /// Nullifies (destroys) another yellow orb.
     /// </summary>
-    private void NullifyShooter(PlayerTargetingOrbShooter shooter)
+    private void NullifyYellowOrb(YellowOrb otherYellowOrb)
     {
         if (debugMode)
         {
-            Debug.Log($"Yellow orb nullified targeting shooter: {shooter.name}");
+            Debug.Log($"Yellow orb nullified another yellow orb: {otherYellowOrb.name}");
         }
         
         // Play nullify effects
         PlayNullifyEffects();
         
-        // Stop the shooter temporarily
-        shooter.StopShooting();
-        
-        // Restart shooting after a delay
-        StartCoroutine(RestartShooterAfterDelay(shooter, 2f));
-        
-        // Destroy this yellow orb
-        Destroy(gameObject);
-    }
-    
-    /// <summary>
-    /// Temporarily disables a regular orb shooter.
-    /// </summary>
-    private void NullifyRegularShooter(OrbShooter shooter)
-    {
-        if (debugMode)
-        {
-            Debug.Log($"Yellow orb nullified regular shooter: {shooter.name}");
-        }
-        
-        // Play nullify effects
-        PlayNullifyEffects();
-        
-        // Stop the shooter temporarily
-        shooter.StopShooting();
-        
-        // Restart shooting after a delay
-        StartCoroutine(RestartRegularShooterAfterDelay(shooter, 2f));
+        // Destroy the other yellow orb
+        Destroy(otherYellowOrb.gameObject);
         
         // Destroy this yellow orb
         Destroy(gameObject);
@@ -188,42 +230,6 @@ public class YellowOrb : MonoBehaviour
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.PlaySFX(nullifySound);
-        }
-    }
-    
-    /// <summary>
-    /// Restarts a targeting shooter after a delay.
-    /// </summary>
-    private System.Collections.IEnumerator RestartShooterAfterDelay(PlayerTargetingOrbShooter shooter, float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        
-        if (shooter != null)
-        {
-            shooter.StartShooting();
-            
-            if (debugMode)
-            {
-                Debug.Log($"Restarted targeting shooter: {shooter.name}");
-            }
-        }
-    }
-    
-    /// <summary>
-    /// Restarts a regular shooter after a delay.
-    /// </summary>
-    private System.Collections.IEnumerator RestartRegularShooterAfterDelay(OrbShooter shooter, float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        
-        if (shooter != null)
-        {
-            shooter.StartShooting();
-            
-            if (debugMode)
-            {
-                Debug.Log($"Restarted regular shooter: {shooter.name}");
-            }
         }
     }
     

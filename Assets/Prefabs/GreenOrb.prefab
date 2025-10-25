@@ -182,3 +182,4 @@ MonoBehaviour:
   isShooterOrb: 0
   moveDirection: {x: 0, y: -1}
   moveSpeed: 10
+  debugMode: 0

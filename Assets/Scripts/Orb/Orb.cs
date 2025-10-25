@@ -29,6 +29,9 @@ public class Orb : MonoBehaviour
     private bool isCollected = false;
     private bool isRespawning = false;
     
+    [Header("Debug")]
+    [SerializeField] private bool debugMode = false;
+    
     private void Awake()
     {
         // Get components if not assigned
@@ -40,6 +43,19 @@ public class Orb : MonoBehaviour
             audioSource = GetComponent<AudioSource>();
             
         startPosition = transform.position;
+        
+        // Debug collider info
+        if (debugMode)
+        {
+            if (orbCollider != null)
+            {
+                Debug.Log($"Orb collider: IsTrigger={orbCollider.isTrigger}, Layer={gameObject.layer}, Tag={gameObject.tag}, Radius={(orbCollider as CircleCollider2D)?.radius}");
+            }
+            else
+            {
+                Debug.LogError($"Orb {gameObject.name} has no Collider2D component!");
+            }
+        }
         
         // Set up orb appearance
         SetupOrbAppearance();
@@ -87,11 +103,38 @@ public class Orb : MonoBehaviour
     {
         if (isCollected) return;
 
+        if (debugMode)
+        {
+            Debug.Log($"Orb OnTriggerEnter2D called with: {other.name}");
+        }
+
+        // Check if it's a yellow orb (nullify orb)
+        YellowOrb yellowOrb = other.GetComponent<YellowOrb>();
+        if (yellowOrb != null)
+        {
+            if (debugMode)
+            {
+                Debug.Log($"Orb detected YellowOrb component on: {other.name}");
+            }
+            // Yellow orb nullifies this orb
+            NullifyOrb();
+            return;
+        }
+
         // Check if player collected the orb
         PlayerController player = other.GetComponent<PlayerController>();
         if (player != null)
         {
+            if (debugMode)
+            {
+                Debug.Log($"Orb detected Player component on: {other.name}");
+            }
             CollectOrb(player);
+        }
+        
+        if (debugMode)
+        {
+            Debug.Log($"Orb collision with {other.name} - no matching components found");
         }
     }
     
@@ -129,6 +172,22 @@ public class Orb : MonoBehaviour
             // Destroy the orb if respawn is disabled
             Destroy(gameObject, 0.5f);
         }
+    }
+    
+    /// <summary>
+    /// Called when this orb is nullified by a yellow orb.
+    /// </summary>
+    private void NullifyOrb()
+    {
+        if (isCollected) return;
+        
+        isCollected = true;
+        
+        // Play nullify effects
+        PlayCollectionEffects();
+        
+        // Destroy this orb
+        Destroy(gameObject);
     }
     
     private void PlayCollectionEffects()

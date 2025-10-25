@@ -78,9 +78,9 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingLayerID: -1272922995
+  m_SortingLayer: 2
+  m_SortingOrder: 10
   m_Sprite: {fileID: -5250581992079232843, guid: 4b4ea9f7340ae6e43a6f0a43059d0768, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -154,3 +154,4 @@ MonoBehaviour:
   isShooterOrb: 1
   moveDirection: {x: 0, y: -1}
   moveSpeed: 10
+  debugMode: 1

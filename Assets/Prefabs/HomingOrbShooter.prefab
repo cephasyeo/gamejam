@@ -51,5 +51,5 @@ MonoBehaviour:
   playerTransform: {fileID: 0}
   targetingRange: 20
   orbSequence: 02000000
-  whiteOrbPrefab: {fileID: 2148215796278044752, guid: 528bbbccd96bf4d459c2dcfb4375116c, type: 3}
+  whiteOrbPrefab: {fileID: 2148215796278044752, guid: 78c9d92d38bb6d54599f741acf280723, type: 3}
   debugMode: 0
