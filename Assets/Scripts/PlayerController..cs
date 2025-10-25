@@ -42,7 +42,6 @@ namespace TarodevController
             // Freeze rotation to prevent rolling
             _rb.freezeRotation = true;
             
-            
             // Get PlayerOrbManager if not assigned
             if (orbManager == null)
                 orbManager = GetComponent<PlayerOrbManager>();
@@ -218,12 +217,12 @@ namespace TarodevController
                 return; // Let PlayerOrbManager handle horizontal movement during dash
             }
             
-            // If there's a significant difference between frame velocity and rigidbody velocity, sync them
-            float velocityDifference = Mathf.Abs(_frameVelocity.x - _rb.linearVelocity.x);
-            if (velocityDifference > 0.1f) // Only sync if there's a meaningful difference
-            {
-                _frameVelocity.x = _rb.linearVelocity.x;
-            }
+            // // If there's a significant difference between frame velocity and rigidbody velocity, sync them
+            // float velocityDifference = Mathf.Abs(_frameVelocity.x - _rb.linearVelocity.x);
+            // if (velocityDifference > 0.1f) // Only sync if there's a meaningful difference
+            // {
+            //     _frameVelocity.x = _rb.linearVelocity.x;
+            // }
             
             if (_frameInput.Move.x == 0)
             {
@@ -273,6 +272,20 @@ namespace TarodevController
             
             // Always apply the frame velocity to ensure consistency
             _rb.linearVelocity = _frameVelocity;
+        }
+        
+        public void ResetPlayerState()
+        {
+            // Reset jump states
+            _jumpToConsume = false;
+            _bufferedJumpUsable = false;
+            _endedJumpEarly = false;
+            _coyoteUsable = false;
+            _timeJumpWasPressed = 0;
+            
+            // Reset grounded state
+            _grounded = false;
+            _frameLeftGrounded = float.MinValue;
         }
 
 #if UNITY_EDITOR

@@ -132,7 +132,7 @@ public class RespawnManager : MonoBehaviour
         PlayerController playerController = playerTransform.GetComponent<PlayerController>();
         if (playerController != null)
         {
-            // Reset any player-specific state here if needed
+            playerController.ResetPlayerState();
         }
         
         // Reset orb abilities (if PlayerOrbManager exists)

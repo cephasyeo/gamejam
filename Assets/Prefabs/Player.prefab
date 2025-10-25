@@ -83,7 +83,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: -9219349313646832486, guid: f9a7730eabaf1f54c85f2ca4b6caab14, type: 3}
+  m_Sprite: {fileID: 2834879143909207370, guid: 4a92610318ec31043ab38f6cb556cad7, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -156,6 +156,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TarodevController.PlayerController
   _stats: {fileID: 11400000, guid: 8f22c114339ff0c41a9024a330d0c68e, type: 2}
+  orbManager: {fileID: 0}
+  inputHandler: {fileID: 0}
 --- !u!61 &4351447043347939450
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -190,15 +192,15 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0.01698032}
+  m_Offset: {x: 0.013804793, y: 0.03768736}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1, y: 1}
+    oldSize: {x: 2, y: 2}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.65, y: 0.96603936}
+  m_Size: {x: 1.2781157, y: 1.9392737}
   m_EdgeRadius: 0

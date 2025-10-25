@@ -130,3 +130,5 @@ public class RespawnPoint : MonoBehaviour
         Gizmos.DrawWireCube(transform.position, Vector3.one * 2f);
     }
 }
+
+

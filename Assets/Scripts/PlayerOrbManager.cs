@@ -218,11 +218,6 @@ public class PlayerOrbManager : MonoBehaviour
             
             // Apply dash velocity with NO vertical movement (gravity suspended)
             playerRigidbody.linearVelocity = dashVelocity;
-            
-            if (debugMode)
-            {
-                Debug.Log($"Dashing! Speed: {dashSpeed}, Direction: {dashDirection}, Velocity: {playerRigidbody.linearVelocity}");
-            }
         }
     }
     
