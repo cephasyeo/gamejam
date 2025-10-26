@@ -112,6 +112,11 @@ public class PauseMenu : MonoBehaviour
     
     private void ShowOptionsMenu()
     {
+        if (debugMode)
+        {
+            Debug.Log($"ShowOptionsMenu called. optionsMenu: {optionsMenu}, optionsMenuScript: {optionsMenuScript}");
+        }
+        
         if (optionsMenu != null)
         {
             optionsMenu.SetActive(true);
@@ -122,9 +127,16 @@ public class PauseMenu : MonoBehaviour
                 optionsMenuScript.SetFromMainMenu(false);
             }
         }
+        else
+        {
+            if (debugMode)
+            {
+                Debug.LogError("ShowOptionsMenu: optionsMenu is null!");
+            }
+        }
         
-        // Hide pause menu while options are open
-        HidePauseMenu();
+        // DON'T hide pause menu - let it stay visible in background
+        // The options menu should overlay it
     }
     
     private void QuitToMainMenu()
@@ -160,7 +172,7 @@ public class PauseMenu : MonoBehaviour
         isPauseMenuActive = true;
 
         // Hide options menu if it's open
-        if (optionsMenu != null)
+        if (optionsMenu != null && optionsMenu.activeSelf)
         {
             optionsMenu.SetActive(false);
         }

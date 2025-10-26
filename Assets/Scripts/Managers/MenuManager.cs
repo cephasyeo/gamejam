@@ -16,8 +16,28 @@ public class MenuManager : MonoBehaviour
     [Header("Debug")]
     [SerializeField] private bool debugMode = true;
     
+    private bool isTransitioning = false;
+    
+    private void Awake()
+    {
+        // Reset transition flag when menu loads
+        isTransitioning = false;
+    }
+    
     public void PlayGame()
     {
+        // Prevent multiple calls
+        if (isTransitioning)
+        {
+            if (debugMode)
+            {
+                Debug.LogWarning("PlayGame called but already transitioning - ignoring");
+            }
+            return;
+        }
+        
+        isTransitioning = true;
+        
         // Load Level1 directly from MainMenu (GameManager will be created there)
         SceneManager.LoadScene(gameSceneIndex);
         
@@ -29,6 +49,11 @@ public class MenuManager : MonoBehaviour
     
     public void ShowOptions()
     {
+        if (debugMode)
+        {
+            Debug.Log("ShowOptions called");
+        }
+        
         if (optionsMenu != null)
         {
             optionsMenu.SetActive(true);
@@ -37,6 +62,10 @@ public class MenuManager : MonoBehaviour
             if (optionsMenuScript != null)
             {
                 optionsMenuScript.SetFromMainMenu(true);
+                if (debugMode)
+                {
+                    Debug.Log("Set options menu context to Main Menu");
+                }
             }
         }
         
@@ -54,6 +83,11 @@ public class MenuManager : MonoBehaviour
     
     public void HideOptions()
     {
+        if (debugMode)
+        {
+            Debug.Log("HideOptions called");
+        }
+        
         if (optionsMenu != null)
         {
             optionsMenu.SetActive(false);
@@ -67,7 +101,7 @@ public class MenuManager : MonoBehaviour
         
         if (debugMode)
         {
-            Debug.Log("Options menu closed");
+            Debug.Log("Options menu closed and main menu shown");
         }
     }
     
@@ -99,23 +133,40 @@ public class MenuManager : MonoBehaviour
 
     public void QuitGame()
     {
+        if (debugMode)
+        {
+            Debug.Log("QuitGame called in MenuManager");
+        }
+        
         // If GameManager exists, use it. Otherwise, quit directly
         if (GameManager.Instance != null)
         {
+            if (debugMode)
+            {
+                Debug.Log("GameManager found, delegating quit to GameManager");
+            }
             GameManager.Instance.QuitGame();
         }
         else
         {
+            if (debugMode)
+            {
+                Debug.Log("No GameManager found, quitting application directly");
+            }
+            
             #if UNITY_EDITOR
+                if (debugMode)
+                {
+                    Debug.Log("Editor detected - stopping play mode");
+                }
                 UnityEditor.EditorApplication.isPlaying = false;
             #else
+                if (debugMode)
+                {
+                    Debug.Log("Build detected - calling Application.Quit()");
+                }
                 Application.Quit();
             #endif
-        }
-        
-        if (debugMode)
-        {
-            Debug.Log("Quit game requested");
         }
     }
     

@@ -219,12 +219,20 @@ public class GameManager : MonoBehaviour
     {
         if (debugMode)
         {
-            Debug.Log("Quitting game");
+            Debug.Log("QuitGame called in GameManager");
         }
         
         #if UNITY_EDITOR
+            if (debugMode)
+            {
+                Debug.Log("Editor detected - stopping play mode");
+            }
             UnityEditor.EditorApplication.isPlaying = false;
         #else
+            if (debugMode)
+            {
+                Debug.Log("Build detected - calling Application.Quit()");
+            }
             Application.Quit();
         #endif
     }

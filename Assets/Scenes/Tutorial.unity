@@ -2239,8 +2239,8 @@ MonoBehaviour:
   continueButton: {fileID: 997680163}
   optionsButton: {fileID: 1064737374}
   quitToMainMenuButton: {fileID: 1221705891}
-  optionsMenu: {fileID: 0}
-  optionsMenuScript: {fileID: 0}
+  optionsMenu: {fileID: 1539383835}
+  optionsMenuScript: {fileID: 1539383837}
   debugMode: 1
 --- !u!114 &631834647
 MonoBehaviour:
@@ -2763,7 +2763,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1539383837}
         m_TargetAssemblyTypeName: OptionsMenu, Assembly-CSharp
-        m_MethodName: ReturnToMainMenu
+        m_MethodName: HideOptionsMenu
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -6517,7 +6517,7 @@ MonoBehaviour:
   sfxVolumeSlider: {fileID: 19397751}
   backButton: {fileID: 757168592}
   resetButton: {fileID: 1755103438}
-  pauseMenu: {fileID: 0}
+  pauseMenu: {fileID: 631834646}
   menuManager: {fileID: 0}
   isFromMainMenu: 1
   debugMode: 1

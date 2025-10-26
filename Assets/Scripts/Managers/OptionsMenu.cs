@@ -19,6 +19,12 @@ public class OptionsMenu : MonoBehaviour
     [Header("Debug")]
     [SerializeField] private bool debugMode = true;
     
+    private void Awake()
+    {
+        // Start disabled - will be activated by parent menus when needed
+        gameObject.SetActive(false);
+    }
+    
     private void Start()
     {
         InitializeUI();
@@ -26,8 +32,14 @@ public class OptionsMenu : MonoBehaviour
         
         if (debugMode)
         {
-            Debug.Log("OptionsMenu initialized");
+            Debug.Log($"OptionsMenu initialized. isFromMainMenu: {isFromMainMenu}, menuManager: {menuManager}, pauseMenu: {pauseMenu}");
         }
+    }
+    
+    private void OnEnable()
+    {
+        // Refresh UI when enabled
+        RefreshSliderValues();
     }
     
     private void RefreshSliderValues()
@@ -154,6 +166,11 @@ public class OptionsMenu : MonoBehaviour
     
     private void OnBackButtonClicked()
     {
+        if (debugMode)
+        {
+            Debug.Log($"Back button clicked. isFromMainMenu: {isFromMainMenu}, menuManager: {menuManager}, pauseMenu: {pauseMenu}");
+        }
+        
         if (isFromMainMenu)
         {
             // Main menu context: close options and show main menu
@@ -163,16 +180,18 @@ public class OptionsMenu : MonoBehaviour
             }
             else
             {
+                // Fallback: just close options menu
                 CloseOptionsMenu();
             }
         }
         else
         {
-            // Pause menu context: hide options and show pause menu
+            // Pause menu context: hide options, pause menu should already be visible
             gameObject.SetActive(false);
-            if (pauseMenu != null)
+            
+            if (debugMode)
             {
-                pauseMenu.ShowPauseMenu();
+                Debug.Log("Closing options menu in pause context");
             }
         }
     }

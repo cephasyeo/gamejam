@@ -10,6 +10,9 @@ public class MainMenuButtonHelper : MonoBehaviour
     [Header("Button Type")]
     [SerializeField] private ButtonType buttonType;
     
+    [Header("Debug")]
+    [SerializeField] private bool debugMode = true;
+    
     private enum ButtonType
     {
         Play,
@@ -25,13 +28,22 @@ public class MainMenuButtonHelper : MonoBehaviour
             switch (buttonType)
             {
                 case ButtonType.Play:
-                    button.onClick.AddListener(() => FindFirstObjectByType<MenuManager>()?.PlayGame());
+                    button.onClick.AddListener(() => {
+                        if (debugMode) Debug.Log("MainMenuButtonHelper: Play button clicked!");
+                        FindFirstObjectByType<MenuManager>()?.PlayGame();
+                    });
                     break;
                 case ButtonType.Options:
-                    button.onClick.AddListener(() => FindFirstObjectByType<MenuManager>()?.ShowOptions());
+                    button.onClick.AddListener(() => {
+                        if (debugMode) Debug.Log("MainMenuButtonHelper: Options button clicked!");
+                        FindFirstObjectByType<MenuManager>()?.ShowOptions();
+                    });
                     break;
                 case ButtonType.Quit:
-                    button.onClick.AddListener(() => FindFirstObjectByType<MenuManager>()?.QuitGame());
+                    button.onClick.AddListener(() => {
+                        if (debugMode) Debug.Log("MainMenuButtonHelper: Quit button clicked!");
+                        FindFirstObjectByType<MenuManager>()?.QuitGame();
+                    });
                     break;
             }
         }
