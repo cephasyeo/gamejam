@@ -8216,6 +8216,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 6666239526575469390, guid: cec0d87405769e04d8fb7a10570a31d8, type: 3}
+      propertyPath: m_SortingLayer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6666239526575469390, guid: cec0d87405769e04d8fb7a10570a31d8, type: 3}
+      propertyPath: m_SortingOrder
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 6666239526575469390, guid: cec0d87405769e04d8fb7a10570a31d8, type: 3}
+      propertyPath: m_SortingLayerID
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6690243634310070616, guid: cec0d87405769e04d8fb7a10570a31d8, type: 3}
       propertyPath: m_Name
       value: Player

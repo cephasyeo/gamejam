@@ -7617,6 +7617,10 @@ PrefabInstance:
       propertyPath: yellowOrbShootSound
       value: 
       objectReference: {fileID: 8300000, guid: 6fef142c68f194649a115d935a48782e, type: 3}
+    - target: {fileID: 6666239526575469390, guid: cec0d87405769e04d8fb7a10570a31d8, type: 3}
+      propertyPath: m_SortingOrder
+      value: 15
+      objectReference: {fileID: 0}
     - target: {fileID: 6690243634310070616, guid: cec0d87405769e04d8fb7a10570a31d8, type: 3}
       propertyPath: m_Name
       value: Player
