@@ -1507,7 +1507,7 @@ MonoBehaviour:
       m_Calls: []
   m_text: 'Take this quick!!!
 
-    Shoot it at the other orbs to nullify them!!!'
+    Shoot it at the bad orbs to nullify them!!!'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 9f4eea739915a964b9211a00f4f3a6ea, type: 2}
   m_sharedMaterial: {fileID: 2441324847175947759, guid: 9f4eea739915a964b9211a00f4f3a6ea, type: 2}
@@ -7611,11 +7611,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8945190899628526004, guid: cec0d87405769e04d8fb7a10570a31d8, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 89.44
+      value: -28.91
       objectReference: {fileID: 0}
     - target: {fileID: 8945190899628526004, guid: cec0d87405769e04d8fb7a10570a31d8, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.35
+      value: -0.47
       objectReference: {fileID: 0}
     - target: {fileID: 8945190899628526004, guid: cec0d87405769e04d8fb7a10570a31d8, type: 3}
       propertyPath: m_LocalPosition.z
