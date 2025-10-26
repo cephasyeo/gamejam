@@ -218,7 +218,8 @@ public class OrbCollector : MonoBehaviour
     private void TriggerUIUpdate()
     {
         // Calculate current stacks based on remaining abilities
-        int redStacks = (currentAbility == OrbAbility.Jump) ? remainingAirJumps : 0;
+        // Always show remaining air jumps for red orbs, regardless of current ability
+        int redStacks = remainingAirJumps;
         int greenStacks = 0; // Will be updated by DashSystem
         
         // Trigger UI update event

@@ -44,7 +44,7 @@ public class PlayerOrbManager : MonoBehaviour
         // Subscribe to orb collector events
         if (orbCollector != null)
         {
-            orbCollector.OnOrbStacksChanged += OnOrbStacksChanged;
+            orbCollector.OnOrbStacksChanged += HandleOrbStacksChanged;
             orbCollector.OnOrbCollected += OnOrbCollected;
             orbCollector.OnPlayerReset += OnPlayerReset;
         }
@@ -60,6 +60,15 @@ public class PlayerOrbManager : MonoBehaviour
         {
             spriteManager.OnSpriteChanged += OnSpriteChanged;
         }
+    }
+    
+    /// <summary>
+    /// Handles orb stacks changed events from OrbCollector.
+    /// </summary>
+    private void HandleOrbStacksChanged(int redStacks, int greenStacks)
+    {
+        // Trigger full UI update to get both red and green stacks
+        TriggerUIUpdate();
     }
     
     /// <summary>
@@ -238,6 +247,12 @@ public class PlayerOrbManager : MonoBehaviour
         {
             orbCollector.ClearAllOrbs();
         }
+        
+        // Also reset dash count when clearing all orbs
+        if (dashSystem != null)
+        {
+            dashSystem.ResetDashCount();
+        }
     }
     
     /// <summary>
@@ -248,6 +263,12 @@ public class PlayerOrbManager : MonoBehaviour
         if (orbCollector != null)
         {
             orbCollector.ResetPlayerToDefault();
+        }
+        
+        // Also reset dash count when resetting player
+        if (dashSystem != null)
+        {
+            dashSystem.ResetDashCount();
         }
     }
     
