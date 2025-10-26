@@ -123,6 +123,18 @@ public class YellowOrb : MonoBehaviour
             return;
         }
         
+        // Check if it hit a purple orb (nullify it)
+        PurpleOrb purpleOrb = other.GetComponent<PurpleOrb>();
+        if (purpleOrb != null)
+        {
+            if (debugMode)
+            {
+                Debug.Log($"YellowOrb detected PurpleOrb component on: {other.name}");
+            }
+            NullifyPurpleOrb(purpleOrb);
+            return;
+        }
+        
         // Check if it hit another orb (red, green, white)
         Orb otherOrb = other.GetComponent<Orb>();
         if (otherOrb != null)
@@ -131,7 +143,29 @@ public class YellowOrb : MonoBehaviour
             {
                 Debug.Log($"YellowOrb detected Orb component on: {other.name}");
             }
-            NullifyOrb(otherOrb);
+            
+            // Get the orb stats to check the type
+            var orbStats = otherOrb.GetOrbStats();
+            if (orbStats != null)
+            {
+                // Only nullify white orbs (Reset ability), ignore red and green orbs
+                if (orbStats.ability == OrbAbility.Reset)
+                {
+                    NullifyOrb(otherOrb);
+                }
+                else
+                {
+                    if (debugMode)
+                    {
+                        Debug.Log($"YellowOrb ignoring {orbStats.orbName} (not a nullifiable orb)");
+                    }
+                }
+            }
+            else
+            {
+                // If no orb stats, assume it's nullifiable
+                NullifyOrb(otherOrb);
+            }
             return;
         }
         
@@ -184,6 +218,26 @@ public class YellowOrb : MonoBehaviour
         
         // Destroy the other orb
         Destroy(orb.gameObject);
+        
+        // Destroy this yellow orb
+        Destroy(gameObject);
+    }
+    
+    /// <summary>
+    /// Nullifies (destroys) a purple orb.
+    /// </summary>
+    private void NullifyPurpleOrb(PurpleOrb purpleOrb)
+    {
+        if (debugMode)
+        {
+            Debug.Log($"Yellow orb nullified a purple orb: {purpleOrb.name}");
+        }
+        
+        // Play nullify effects
+        PlayNullifyEffects();
+        
+        // Destroy the purple orb
+        Destroy(purpleOrb.gameObject);
         
         // Destroy this yellow orb
         Destroy(gameObject);

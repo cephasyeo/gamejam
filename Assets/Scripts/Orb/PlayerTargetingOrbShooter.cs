@@ -14,6 +14,9 @@ public class PlayerTargetingOrbShooter : MonoBehaviour
     [Tooltip("If not assigned in inspector, the script will try to find the player by tag 'Player'")]
     public Transform playerTransform;
     public float targetingRange = 10f;
+    [Header("Stop Shooting Settings")]
+    public bool useStopThreshold = false;
+    public float stopShootingXThreshold = 9999f;
 
     [Header("Orb Sequence")]
     public List<OrbType> orbSequence = new List<OrbType> { OrbType.White };
@@ -157,6 +160,18 @@ public class PlayerTargetingOrbShooter : MonoBehaviour
         
         while (isShooting)
         {
+            if (useStopThreshold && playerTransform != null)
+            {
+                if (debugMode) Debug.Log($"PlayerTargetingOrbShooter: Checking threshold. Player x: {playerTransform.position.x}, Threshold: {stopShootingXThreshold}");
+                
+                if (playerTransform.position.x > stopShootingXThreshold)
+                {
+                    if (debugMode) Debug.Log($"PlayerTargetingOrbShooter: Player x ({playerTransform.position.x}) passed threshold ({stopShootingXThreshold}), stopping shooting.");
+                    StopShooting();
+                    yield break;
+                }
+            }
+            
             if (playerInRange)
             {
                 ShootOrbAtLastKnownPosition();

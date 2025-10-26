@@ -136,8 +136,18 @@ public class Orb : MonoBehaviour
             {
                 Debug.Log($"Orb detected YellowOrb component on: {other.name}");
             }
-            // Yellow orb nullifies this orb
-            NullifyOrb();
+            
+            // Check if this orb should be nullified by yellow orb
+            // Yellow orbs only nullify white orbs (Reset ability), not red or green
+            if (orbStats != null && orbStats.ability == OrbAbility.Reset)
+            {
+                // Yellow orb nullifies this white orb
+                NullifyOrb();
+            }
+            else if (debugMode)
+            {
+                Debug.Log($"Orb ignoring yellow orb (only white orbs are nullified by yellow orbs)");
+            }
             return;
         }
 
