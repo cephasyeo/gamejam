@@ -136,8 +136,14 @@ public class YellowOrbShooter : MonoBehaviour
     /// </summary>
     private void PlayShootSound()
     {
-        if (audioSource != null && yellowOrbShootSound != null)
+        // Use AudioManager to play SFX so it respects SFX volume settings
+        if (AudioManager.Instance != null && yellowOrbShootSound != null)
         {
+            AudioManager.Instance.PlaySFX(yellowOrbShootSound);
+        }
+        else if (audioSource != null && yellowOrbShootSound != null)
+        {
+            // Fallback to local AudioSource if AudioManager not available
             audioSource.PlayOneShot(yellowOrbShootSound);
         }
         else if (debugMode)
