@@ -261,8 +261,8 @@ public class GameManager : MonoBehaviour
         var keyboard = Keyboard.current;
         if (keyboard == null) return;
         
-        // Handle pause input (P key) - only in game scenes
-        if (keyboard.pKey.wasPressedThisFrame && !IsMainMenuScene())
+        // Handle pause input (P key or Escape key) - only in game scenes
+        if ((keyboard.pKey.wasPressedThisFrame || keyboard.escapeKey.wasPressedThisFrame) && !IsMainMenuScene())
         {
             TogglePause();
         }
